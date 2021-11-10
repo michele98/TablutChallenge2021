@@ -15,4 +15,8 @@ public class PlayerBeccoBlack extends PlayerBecco {
         //TODO: implement Minimax to determine Action
         return new Action("z0", "z0", this.getColor());
     }
+
+    public void prova(){
+        //
+    }
 }
