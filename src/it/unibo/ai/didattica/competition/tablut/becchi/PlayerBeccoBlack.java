@@ -2,7 +2,6 @@ package it.unibo.ai.didattica.competition.tablut.becchi;
 
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
-
 import java.io.IOException;
 
 public class PlayerBeccoBlack extends PlayerBecco {
