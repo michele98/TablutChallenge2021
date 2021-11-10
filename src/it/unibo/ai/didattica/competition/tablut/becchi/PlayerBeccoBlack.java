@@ -16,7 +16,4 @@ public class PlayerBeccoBlack extends PlayerBecco {
         return new Action("z0", "z0", this.getColor());
     }
 
-    public void prova(){
-        //
-    }
 }
