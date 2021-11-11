@@ -33,5 +33,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="com.googlecode.aima-java:aima-core:3.0.0" level="project" />
   </component>
 </module>
