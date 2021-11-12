@@ -16,9 +16,9 @@ public class TablutBecchiClient extends TablutClient {
         super(player, name, timeout, ipAddress);
 
         if (this.getPlayer().equals(State.Turn.WHITE)) {
-            becco = new PlayerBeccoWhite();
+            becco = new PlayerBeccoWhite(timeout);
         } else {
-            becco = new PlayerBeccoBlack();
+            becco = new PlayerBeccoBlack(timeout);
         }
     }
 
@@ -32,7 +32,7 @@ public class TablutBecchiClient extends TablutClient {
 
     public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException {
         String role = "";
-        String name = "random";
+        String name = "Il miglior Becco, col pelo lungo, le corna belle";
         String ipAddress = "localhost";
         int timeout = 60;
         // TODO: change the behavior?

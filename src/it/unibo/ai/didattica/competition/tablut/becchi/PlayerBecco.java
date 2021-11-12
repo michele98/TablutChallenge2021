@@ -7,10 +7,13 @@ import java.io.IOException;
 
 public abstract class PlayerBecco {
     private State.Turn color;
+    private int timeout;
 
-    public PlayerBecco(State.Turn color) {
+    public PlayerBecco(State.Turn color, int timeout) {
         this.color = color;
+        this.timeout = timeout;
     }
+
     public State.Turn getColor() {
         return color;
     }
