@@ -15,10 +15,13 @@ public class TablutBecchiClient extends TablutClient {
     public TablutBecchiClient(String player, String name, int timeout, String ipAddress) throws UnknownHostException, IOException {
         super(player, name, timeout, ipAddress);
 
+        int depthLim = 5; // maybe calculated with respect to timeout
+        GameBecchiTablut game = new GameBecchiTablut(depthLim);
+
         if (this.getPlayer().equals(State.Turn.WHITE)) {
-            becco = new PlayerBeccoWhite(timeout);
+            becco = new PlayerBeccoWhite(timeout, game);
         } else {
-            becco = new PlayerBeccoBlack(timeout);
+            becco = new PlayerBeccoBlack(timeout, game);
         }
     }
 
@@ -54,6 +57,8 @@ public class TablutBecchiClient extends TablutClient {
 
         TablutBecchiClient client = new TablutBecchiClient(role, name, timeout, ipAddress);
         client.run();
+        // sleep
+        // kill client retrieving the move
     }
 
     private void sendActionToServer(Action a) {

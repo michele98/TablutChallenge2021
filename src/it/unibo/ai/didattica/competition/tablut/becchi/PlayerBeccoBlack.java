@@ -6,8 +6,8 @@ import java.io.IOException;
 
 public class PlayerBeccoBlack extends PlayerBecco {
 
-    public PlayerBeccoBlack(int timeout) {
-        super(State.Turn.BLACK, timeout);
+    public PlayerBeccoBlack(int timeout, GameBecchiTablut game) {
+        super(State.Turn.BLACK, timeout, game);
     }
 
     @Override
