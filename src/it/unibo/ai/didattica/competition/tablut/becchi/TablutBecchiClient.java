@@ -15,12 +15,13 @@ public class TablutBecchiClient extends TablutClient {
     public TablutBecchiClient(String player, String name, int timeout, String ipAddress) throws UnknownHostException, IOException {
         super(player, name, timeout, ipAddress);
 
-        if (player.toLowerCase().equals("white")) {
-            becco = new PlayerBeccoWhite();
-        } else if (player.toLowerCase().equals("black")) {
-            becco = new PlayerBeccoBlack();
+        int depthLim = 5; // maybe calculated with respect to timeout
+        GameBecchiTablut game = new GameBecchiTablut(depthLim);
+
+        if (this.getPlayer().equals(State.Turn.WHITE)) {
+            becco = new PlayerBeccoWhite(timeout, game);
         } else {
-            throw new IllegalArgumentException();
+            becco = new PlayerBeccoBlack(timeout, game);
         }
     }
 
@@ -32,9 +33,9 @@ public class TablutBecchiClient extends TablutClient {
         this(player, "Becchi", 60, "localhost");
     }
 
-    public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException, InterruptedException {
+    public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException {
         String role = "";
-        String name = "random";
+        String name = "Il miglior Becco, col pelo lungo, le corna belle";
         String ipAddress = "localhost";
         int timeout = 60;
         // TODO: change the behavior?
@@ -56,16 +57,16 @@ public class TablutBecchiClient extends TablutClient {
 
         TablutBecchiClient client = new TablutBecchiClient(role, name, timeout, ipAddress);
         client.run();
-        //FIXME add Thread.sleep(timeout-3);
+        // sleep
+        // kill client retrieving the move
     }
 
-    private void sendActionToServer(String from, String to, StateTablut.Turn turn) {
-        Action a;
+    private void sendActionToServer(Action a) {
+        System.out.println("Mossa scelta: " + a.toString());
         try {
-            a = new Action(from, to, State.Turn.WHITE);
-        } catch (IOException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+            this.write(a);
+        } catch (ClassNotFoundException | IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -98,73 +99,37 @@ public class TablutBecchiClient extends TablutClient {
             state = this.getCurrentState();
             System.out.println(state.toString());
 
-            if (this.getPlayer().equals(State.Turn.WHITE)) {
-                // TODO: fix this logic, this is a bit shit
-                // Mio turno
-                if (this.getCurrentState().getTurn().equals(StateTablut.Turn.WHITE)) {
-                    // TODO: implementation of minimax search algoritm
-                    Action a = null;
-                    try {
-                        a = becco.getOptimalAction(state);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    try {
-                        this.write(a);
-                    } catch (ClassNotFoundException | IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-                // Turno dell'avversario
-                else if (state.getTurn().equals(StateTablut.Turn.BLACK)) {
-                    System.out.println("Waiting for your opponent move... ");
-                }
-                // ho vinto
-                else if (state.getTurn().equals(StateTablut.Turn.WHITEWIN)) {
+            if (state.getTurn().equals(StateTablut.Turn.BLACKWIN)) {
+                if (this.getPlayer().equals(State.Turn.BLACK)) {
                     System.out.println("YOU WIN!");
                     System.exit(0);
                 }
-                // ho perso
-                else if (state.getTurn().equals(StateTablut.Turn.BLACKWIN)) {
-                    System.out.println("YOU LOSE!");
+                System.out.println("YOU LOSE!");
+                System.exit(0);
+            }
+
+            if (state.getTurn().equals(StateTablut.Turn.WHITEWIN)) {
+                if (this.getPlayer().equals(State.Turn.WHITE)) {
+                    System.out.println("YOU WIN!");
                     System.exit(0);
                 }
-                // pareggio
-                else if (state.getTurn().equals(StateTablut.Turn.DRAW)) {
-                    System.out.println("DRAW!");
-                    System.exit(0);
+                System.out.println("YOU LOSE!");
+                System.exit(0);
+            }
+
+            if (state.getTurn().equals(StateTablut.Turn.DRAW)) {
+                System.out.println("DRAW!");
+                System.exit(0);
+            }
+
+            if (this.getPlayer().equals(this.getCurrentState().getTurn())) {
+                try {
+                    sendActionToServer(becco.getOptimalAction(state));
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             } else {
-                // Mio turno
-                if (this.getCurrentState().getTurn().equals(StateTablut.Turn.BLACK)) {
-                    // TODO: implementation of minimax search algoritm
-                    Action a = null;
-                    try {
-                        a = becco.getOptimalAction(state);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    try {
-                        this.write(a);
-                    } catch (ClassNotFoundException | IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-
-                } else if (state.getTurn().equals(StateTablut.Turn.WHITE)) {
-                    System.out.println("Waiting for your opponent move... ");
-                } else if (state.getTurn().equals(StateTablut.Turn.WHITEWIN)) {
-                    System.out.println("YOU LOSE!");
-                    System.exit(0);
-                } else if (state.getTurn().equals(StateTablut.Turn.BLACKWIN)) {
-                    System.out.println("YOU WIN!");
-                    System.exit(0);
-                } else if (state.getTurn().equals(StateTablut.Turn.DRAW)) {
-                    System.out.println("DRAW!");
-                    System.exit(0);
-                }
+                System.out.println("Waiting for your opponent move... ");
             }
         }
     }
