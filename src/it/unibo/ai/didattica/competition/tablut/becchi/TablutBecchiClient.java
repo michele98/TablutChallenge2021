@@ -32,7 +32,7 @@ public class TablutBecchiClient extends TablutClient {
         this(player, "Becchi", 60, "localhost");
     }
 
-    public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException {
+    public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException, InterruptedException {
         String role = "";
         String name = "random";
         String ipAddress = "localhost";
@@ -56,6 +56,7 @@ public class TablutBecchiClient extends TablutClient {
 
         TablutBecchiClient client = new TablutBecchiClient(role, name, timeout, ipAddress);
         client.run();
+        //FIXME add Thread.sleep(timeout-3);
     }
 
     private void sendActionToServer(String from, String to, StateTablut.Turn turn) {
