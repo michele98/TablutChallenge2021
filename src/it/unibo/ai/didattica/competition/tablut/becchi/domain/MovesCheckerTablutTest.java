@@ -1,12 +1,10 @@
-package it.unibo.ai.didattica.competition.tablut.becchi;
+package it.unibo.ai.didattica.competition.tablut.becchi.domain;
 
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 import it.unibo.ai.didattica.competition.tablut.domain.StateTablut;
 
-import javax.swing.*;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 

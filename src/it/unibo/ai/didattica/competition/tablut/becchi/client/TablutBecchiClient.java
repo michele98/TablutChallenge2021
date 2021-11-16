@@ -1,5 +1,9 @@
-package it.unibo.ai.didattica.competition.tablut.becchi;
+package it.unibo.ai.didattica.competition.tablut.becchi.client;
 
+import it.unibo.ai.didattica.competition.tablut.becchi.domain.GameBecchiTablut;
+import it.unibo.ai.didattica.competition.tablut.becchi.player.PlayerBecco;
+import it.unibo.ai.didattica.competition.tablut.becchi.player.PlayerBeccoBlack;
+import it.unibo.ai.didattica.competition.tablut.becchi.player.PlayerBeccoWhite;
 import it.unibo.ai.didattica.competition.tablut.client.TablutClient;
 import it.unibo.ai.didattica.competition.tablut.domain.*;
 
@@ -15,8 +19,7 @@ public class TablutBecchiClient extends TablutClient {
     public TablutBecchiClient(String player, String name, int timeout, String ipAddress) throws UnknownHostException, IOException {
         super(player, name, timeout, ipAddress);
 
-        int depthLim = 5; // maybe calculated with respect to timeout
-        GameBecchiTablut game = new GameBecchiTablut(depthLim);
+        GameBecchiTablut game = new GameBecchiTablut();
 
         if (this.getPlayer().equals(State.Turn.WHITE)) {
             becco = new PlayerBeccoWhite(timeout, game);
