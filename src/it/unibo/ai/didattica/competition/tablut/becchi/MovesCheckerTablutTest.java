@@ -20,6 +20,7 @@ class MovesCheckerTablutTest {
 
         // a simple test with the white pawn in pos (D1)
         State s = new StateTablut();
+        s.setTurn(State.Turn.WHITE);
         MovesCheckerTablut m = new MovesCheckerTablut();
         int[] pawn = new int[]{0,3};
         HashSet<int[]> l = m.obtainLegalMovesInt(pawn, s);
@@ -29,12 +30,13 @@ class MovesCheckerTablutTest {
 
         // a simple test with the white pawn in pos (D5)
         pawn = new int[]{5,4};
+        s.setTurn(State.Turn.WHITE);
         l = m.obtainLegalMovesInt(pawn,  s);
         System.out.println(Arrays.deepToString(l.toArray()));
 
 
         //testing all moves of black players from the start situation
-
+        s.setTurn(State.Turn.BLACK);
         HashSet<Action> allmoves = m.getAllMoves(s, State.Turn.BLACK);
         System.out.println("Number of moves available: "+allmoves.size());
         allmoves.forEach(System.out::println);
@@ -49,7 +51,7 @@ class MovesCheckerTablutTest {
         }
 
         //testing all moves of white players from the start situation
-
+        s.setTurn(State.Turn.WHITE);
         allmoves = m.getAllMoves(s, State.Turn.WHITE);
         System.out.println("Number of moves available: "+allmoves.size());
         allmoves.forEach(System.out::println);
