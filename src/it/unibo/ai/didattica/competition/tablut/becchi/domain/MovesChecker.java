@@ -2,9 +2,8 @@ package it.unibo.ai.didattica.competition.tablut.becchi.domain;
 
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
-
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.List;
 
 public interface MovesChecker {
 
@@ -15,7 +14,7 @@ public interface MovesChecker {
      * @param state the actual state of the game in which moves are calculated
      * @return arrays with destinations coordinates
      */
-    HashSet<int[]> obtainLegalMovesInt(int[] origin, State state);
+    List<int[]> obtainLegalMovesInt(int[] origin, State state);
 
     /**
      * alternative of obtainLegalMoves : In this (faster) implementation the possible moves are
@@ -25,7 +24,7 @@ public interface MovesChecker {
      * @param state the actual state of the game in which moves are calculated
      * @return 2D arrays whose first element is the origin and second element is the feasible destination
      */
-    HashSet<int[][]> obtainLegalMovesIntOrigin(int[] origin, State state);
+    List<int[][]> obtainLegalMovesIntOrigin(int[] origin, State state);
 
     /**
      * In this implementation all the possible moves of a certain pawn are returned as a set of possible Actions
@@ -36,7 +35,7 @@ public interface MovesChecker {
      * @return the set of possible Actions
      * @throws IOException in case the boxing of the moves in Actions fails
      */
-    HashSet<Action> obtainLegalMoves(int[] origin, State state) throws IOException;
+    List<Action> obtainLegalMoves(int[] origin, State state) throws IOException;
 
     /**
      * In this implementation all the possible moves that can be performed by each player of a given color are
@@ -44,11 +43,10 @@ public interface MovesChecker {
      *
      *
      * @param state the actual state of the game in which moves are calculated
-     * @param turnColor The turn of the player, StateTablut.Turn.WHITE or StateTablut.Turn.BLACK
      * @return the set of all possible Actions
      * @throws IOException in case the boxing of the moves in Actions fails
      */
-    HashSet<Action> getAllMoves(State state, State.Turn turnColor) throws IOException;
+    List<Action> getAllMoves(State state) throws IOException;
 
     /**
      * alternative of getAllMoves: in this (faster) implementation are calculated all the possible moves that can be performed by each player of a given color
@@ -58,6 +56,6 @@ public interface MovesChecker {
      * @param turnColor The turn of the player, StateTablut.Turn.WHITE or StateTablut.Turn.BLACK
      * @return 2D arrays whose first element is the origin and second element is the feasible destination
      */
-    HashSet<int[][]> getAllMovesInt(State state, State.Turn turnColor);
+    List<int[][]> getAllMovesInt(State state, State.Turn turnColor);
 
 }

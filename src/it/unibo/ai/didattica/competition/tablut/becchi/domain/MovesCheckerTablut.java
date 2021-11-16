@@ -3,7 +3,9 @@ package it.unibo.ai.didattica.competition.tablut.becchi.domain;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 public class MovesCheckerTablut implements MovesChecker {
 
@@ -14,30 +16,6 @@ public class MovesCheckerTablut implements MovesChecker {
     int [] throne = new int[]{4, 4};
 
     public MovesCheckerTablut() {
-
-        for (boolean[] u: campsTop) {
-            for (boolean elem: u) {
-                elem = false;
-            }
-        }
-
-        for (boolean[] u: campsBottom) {
-            for (boolean elem: u) {
-                elem = false;
-            }
-        }
-
-        for (boolean[] u: campsLeft) {
-            for (boolean elem: u) {
-                elem = false;
-            }
-        }
-
-        for (boolean[] u: campsRight) {
-            for (boolean elem: u) {
-                elem = false;
-            }
-        }
 
         //top camps
         campsTop[0][3] = true;
@@ -111,14 +89,14 @@ public class MovesCheckerTablut implements MovesChecker {
     }
 
     @Override
-    public HashSet<int[]> obtainLegalMovesInt(int[] origin, State state){
+    public List<int[]> obtainLegalMovesInt(int[] origin, State state){
         State.Pawn pawnToMove = state.getPawn(origin[0], origin[1]);
         if (pawnToMove.equalsPawn(State.Pawn.EMPTY.toString()))
             throw new IllegalArgumentException("Can't move an empty tile!");
 
         int i = origin[0];
         int j = origin[1];
-        HashSet<int[]> list = new HashSet<>();
+        List<int[]> list = new ArrayList<>();
 
         int left = j-1;
         int right = j+1;
@@ -180,14 +158,14 @@ public class MovesCheckerTablut implements MovesChecker {
     }
 
     @Override
-    public HashSet<int[][]> obtainLegalMovesIntOrigin(int[] origin, State state){
+    public List<int[][]> obtainLegalMovesIntOrigin(int[] origin, State state){
         State.Pawn pawnToMove = state.getPawn(origin[0], origin[1]);
         if (pawnToMove.equalsPawn(State.Pawn.EMPTY.toString()))
             throw new IllegalArgumentException("Can't move an empty tile!");
 
         int i = origin[0];
         int j = origin[1];
-        HashSet<int[][]> list = new HashSet<>();
+        List<int[][]> list = new ArrayList<>();
 
         int left = j-1;
         int right = j+1;
@@ -258,7 +236,7 @@ public class MovesCheckerTablut implements MovesChecker {
     }
 
     @Override
-    public HashSet<Action> obtainLegalMoves(int[] origin, State state) throws IOException {
+    public List<Action> obtainLegalMoves(int[] origin, State state) throws IOException {
         int i = origin[0];
         int j = origin[1];
 
@@ -277,7 +255,7 @@ public class MovesCheckerTablut implements MovesChecker {
             throw new IllegalArgumentException("Can't move an empty tile!");
 
 
-        HashSet<Action> list = new HashSet<>();
+        List<Action> list = new ArrayList<>();
 
         int left = j-1;
         int right = j+1;
@@ -350,17 +328,12 @@ public class MovesCheckerTablut implements MovesChecker {
     }
 
     @Override
-    public HashSet<Action> getAllMoves(State state, State.Turn turnColor) throws IOException {
+    public List<Action> getAllMoves(State state) throws IOException {
 
-        if (!state.getTurn().equalsTurn(turnColor.toString()))
-            throw new IllegalStateException("Can't calculate the moves in a different Turn: \n " +
-                    "actual state: " + state.getTurn().toString() + "\n" +
-                    " given state: " + turnColor.toString());
+        List<int[]> movablePawns = new ArrayList<>();
+        List<Action> allMoves = new ArrayList<>();
 
-        HashSet<int[]> movablePawns = new HashSet<>();
-        HashSet<Action> allMoves = new HashSet<>();
-
-        if (turnColor.equals(State.Turn.WHITE) ) {
+        if (state.getTurn().equals(State.Turn.WHITE) ) {
             int[] buf;
             for (int i = 0; i < state.getBoard().length; i++) {
                 for (int j = 0; j < state.getBoard().length; j++) {
@@ -374,7 +347,7 @@ public class MovesCheckerTablut implements MovesChecker {
                 }
 
             }
-        } else if (turnColor.equals(State.Turn.BLACK)) {
+        } else if (state.getTurn().equals(State.Turn.BLACK)) {
             int[] buf;
             for (int i = 0; i < state.getBoard().length; i++) {
                 for (int j = 0; j < state.getBoard().length; j++) {
@@ -389,8 +362,6 @@ public class MovesCheckerTablut implements MovesChecker {
 
         }
 
-        else
-            throw new IllegalStateException("The game is in a turn that is not BLACK nor WHITE");
 
         for (int[] i : movablePawns) {
             allMoves.addAll(obtainLegalMoves(i, state));
@@ -399,10 +370,10 @@ public class MovesCheckerTablut implements MovesChecker {
     }
 
     @Override
-    public HashSet<int[][]> getAllMovesInt(State state, State.Turn turnColor) {
+    public List<int[][]> getAllMovesInt(State state, State.Turn turnColor) {
 
-        HashSet<int[]> movablePawns = new HashSet<>();
-        HashSet<int[][]> allMoves = new HashSet<>();
+        List<int[]> movablePawns = new ArrayList<>();
+        List<int[][]> allMoves = new ArrayList<>();
 
         if (turnColor.equals(State.Turn.WHITE)) {
             int[] buf;
