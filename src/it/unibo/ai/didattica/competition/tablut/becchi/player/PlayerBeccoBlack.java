@@ -1,14 +1,14 @@
-package it.unibo.ai.didattica.competition.tablut.becchi;
+package it.unibo.ai.didattica.competition.tablut.becchi.player;
 
+import it.unibo.ai.didattica.competition.tablut.becchi.domain.GameBecchiTablut;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
-
 import java.io.IOException;
 
-public class PlayerBeccoWhite extends PlayerBecco {
+public class PlayerBeccoBlack extends PlayerBecco {
 
-    public PlayerBeccoWhite(int timeout, GameBecchiTablut game) {
-        super(State.Turn.WHITE, timeout, game);
+    public PlayerBeccoBlack(int timeout, GameBecchiTablut game) {
+        super(State.Turn.BLACK, timeout, game);
     }
 
     @Override
@@ -16,4 +16,5 @@ public class PlayerBeccoWhite extends PlayerBecco {
         //TODO: implement Minimax to determine Action
         return new Action("z0", "z0", this.getColor());
     }
+
 }

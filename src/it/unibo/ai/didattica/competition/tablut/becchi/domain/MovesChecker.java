@@ -1,4 +1,4 @@
-package it.unibo.ai.didattica.competition.tablut.becchi;
+package it.unibo.ai.didattica.competition.tablut.becchi.domain;
 
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
