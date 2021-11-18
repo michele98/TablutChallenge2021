@@ -12,10 +12,11 @@ import java.util.List;
 
 public class IterativeDeepeningSolver extends IterativeDeepeningAlphaBetaSearch<State, Action, State.Turn> {
 
-    //private Heuristic heuristic;
+    private final Heuristic heuristic;
 
-    public IterativeDeepeningSolver(Game<State, Action, State.Turn> game, double utilMin, double utilMax, int time) {
+    public IterativeDeepeningSolver(Game<State, Action, State.Turn> game, double utilMin, double utilMax, int time, Heuristic heuristic) {
         super(game, utilMin, utilMax, time);
+        this.heuristic = heuristic;
     }
 
     @Override
@@ -25,15 +26,7 @@ public class IterativeDeepeningSolver extends IterativeDeepeningAlphaBetaSearch<
             return super.eval(state,player);
         }
         super.eval(state,player);
-
-        // TODO: check if is better considering state.getTurn() instead of player
-        Heuristic heuristic;
-        if (player.equals(State.Turn.WHITE)) {
-            heuristic = new BecchiWhiteHeuristic();
-        } else {
-            heuristic = new BecchiBlackHeuristic();
-        }
-        return  heuristic.getValue(state);
+        return heuristic.getValue(state);
     }
 
     @Override

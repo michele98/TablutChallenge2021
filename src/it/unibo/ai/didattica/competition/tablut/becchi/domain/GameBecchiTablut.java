@@ -14,10 +14,14 @@ public class GameBecchiTablut implements Game<State, Action, State.Turn> {
     private final MovesCheckerTablut movesChecker;
 
 
-    public GameBecchiTablut() {
-
-        this.game = new GameAshtonTablutBecchi(0, -1, "garbage", "ciccio", "ciccio");
+    public GameBecchiTablut(int repeated_moves_allowed, int cache_size, String logs_folder, String whiteName,
+                            String blackName) {
+        this.game = new GameAshtonTablutBecchi(repeated_moves_allowed, cache_size, logs_folder, whiteName, blackName);
         this.movesChecker = new MovesCheckerTablut();
+    }
+
+    public GameBecchiTablut() {
+        this(0, -1, "garbage", "client_w", "client_b");
     }
 
     @Override

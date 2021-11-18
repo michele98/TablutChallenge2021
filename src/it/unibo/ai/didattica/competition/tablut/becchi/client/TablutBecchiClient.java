@@ -19,7 +19,7 @@ public class TablutBecchiClient extends TablutClient {
     public TablutBecchiClient(String player, String name, int timeout, String ipAddress) throws UnknownHostException, IOException {
         super(player, name, timeout, ipAddress);
 
-        GameBecchiTablut game = new GameBecchiTablut();
+        GameBecchiTablut game = new GameBecchiTablut(0, -1, "garbage", "client_w", "client_b");
 
         if (this.getPlayer().equals(State.Turn.WHITE)) {
             becco = new PlayerBeccoWhite(timeout, game);
@@ -33,12 +33,12 @@ public class TablutBecchiClient extends TablutClient {
     }
 
     public TablutBecchiClient(String player) throws UnknownHostException, IOException {
-        this(player, "Becchi", 60, "localhost");
+        this(player, 60, "localhost");
     }
 
     public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException {
         String role = "";
-        String name = "Il miglior Becco, col pelo lungo, le corna belle";
+        String name = "Becchi";
         String ipAddress = "localhost";
         int timeout = 60;
         // TODO: change the behavior?
@@ -82,13 +82,12 @@ public class TablutBecchiClient extends TablutClient {
 
         State state = new StateTablut();
         state.setTurn(State.Turn.WHITE);
-        Game rules = new GameAshtonTablut(99, 0, "garbage", "fake", "fake");
         System.out.println("Ashton Tablut game");
 
         List<int[]> pawns = new ArrayList<int[]>();
         List<int[]> empty = new ArrayList<int[]>();
 
-        System.out.println("You are player " + this.getPlayer().toString() + "!");
+        System.out.println(this.getName() + ", you are player " + this.getPlayer().toString() + "!");
 
         while(true) {
             try {
@@ -98,7 +97,7 @@ public class TablutBecchiClient extends TablutClient {
                 e1.printStackTrace();
                 System.exit(1);
             }
-            System.out.println("Current state:");
+            System.out.println("\nCurrent state:");
             state = this.getCurrentState();
             System.out.println(state.toString());
 
@@ -127,7 +126,7 @@ public class TablutBecchiClient extends TablutClient {
 
             if (this.getPlayer().equals(this.getCurrentState().getTurn())) {
                 try {
-                    sendActionToServer(becco.getOptimalAction(state));
+                    sendActionToServer(becco.getOptimalAction(state, true));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

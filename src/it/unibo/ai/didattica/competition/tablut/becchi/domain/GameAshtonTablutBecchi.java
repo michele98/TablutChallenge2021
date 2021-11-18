@@ -136,7 +136,7 @@ public class GameAshtonTablutBecchi implements Game {
 		int trovati = 0;
 		for (State s : drawConditions) {
 
-			System.out.println(s.toString());
+			//System.out.println(s.toString());
 
 			if (s.equals(state)) {
 				// DEBUG: //
