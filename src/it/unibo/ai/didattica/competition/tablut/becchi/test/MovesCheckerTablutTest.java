@@ -25,8 +25,6 @@ class MovesCheckerTablutTest {
         List<int[]> l = m.obtainLegalMovesInt(pawn, s);
         System.out.println(Arrays.deepToString(l.toArray()));
 
-        //TODO cosa intende con "repeated moves??
-
         // a simple test with the white pawn in pos (D5)
         pawn = new int[]{5,4};
         s.setTurn(State.Turn.WHITE);
