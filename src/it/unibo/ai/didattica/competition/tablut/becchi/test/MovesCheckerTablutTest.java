@@ -1,13 +1,12 @@
-package it.unibo.ai.didattica.competition.tablut.becchi.domain;
+package it.unibo.ai.didattica.competition.tablut.becchi.test;
 
+import it.unibo.ai.didattica.competition.tablut.becchi.domain.MovesCheckerTablut;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 import it.unibo.ai.didattica.competition.tablut.domain.StateTablut;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 import it.unibo.ai.didattica.competition.tablut.domain.*;
@@ -52,7 +51,9 @@ class MovesCheckerTablutTest {
 
         //testing all moves of white players from the start situation
         s.setTurn(State.Turn.WHITE);
+        long startTime = System.nanoTime();
         allmoves = m.getAllMoves(s);
+        long elapsedTime = System.nanoTime() - startTime;
         System.out.println("Number of moves available: "+allmoves.size());
         allmoves.forEach(System.out::println);
 
@@ -62,6 +63,8 @@ class MovesCheckerTablutTest {
             g = new GameAshtonTablut(2, -1, "logs", "WP", "BP");
             g.checkMove(s, a);
         }
+
+        System.out.println(elapsedTime*1e-9);
 
     }
 }

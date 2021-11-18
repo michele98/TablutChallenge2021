@@ -1,24 +1,22 @@
 package it.unibo.ai.didattica.competition.tablut.becchi.domain;
 
 import aima.core.search.adversarial.Game;
-
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
-import it.unibo.ai.didattica.competition.tablut.domain.GameAshtonTablut;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 import it.unibo.ai.didattica.competition.tablut.domain.StateTablut;
-
 import java.io.IOException;
 import java.util.List;
 
 // Adapter di GameAshtonTablut a Game di aima-library
 public class GameBecchiTablut implements Game<State, Action, State.Turn> {
 
-    private GameAshtonTablut game;
-    private MovesCheckerTablut movesChecker;
+    private final it.unibo.ai.didattica.competition.tablut.domain.Game game;
+    private final MovesCheckerTablut movesChecker;
+
 
     public GameBecchiTablut() {
 
-        this.game = new GameAshtonTablut(0, -1, "garbage", "ciccio", "ciccio");
+        this.game = new GameAshtonTablutBecchi(0, -1, "garbage", "ciccio", "ciccio");
         this.movesChecker = new MovesCheckerTablut();
     }
 
@@ -51,6 +49,7 @@ public class GameBecchiTablut implements Game<State, Action, State.Turn> {
         }
         return actions;
     }
+
 
     @Override
     public State getResult(State state, Action action) {
