@@ -17,7 +17,7 @@ public abstract class PlayerBecco {
     public PlayerBecco(State.Turn color, int timeout, GameBecchiTablut game) {
         this.color = color;
         this.timeout = timeout;
-        this.solver = new IterativeDeepeningSolver(game, -1, 1, timeout);
+        this.solver = new IterativeDeepeningSolver(game, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, timeout);
     }
 
     public State.Turn getColor() {

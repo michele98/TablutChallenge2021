@@ -76,15 +76,15 @@ public class GameBecchiTablut implements Game<State, Action, State.Turn> {
     public double getUtility(State state, State.Turn player) {
         if (player.equals(State.Turn.BLACK)) {
             if (state.getTurn().equals(State.Turn.BLACKWIN)) {
-                return 1;
+                return Double.POSITIVE_INFINITY;
             } else if (state.getTurn().equals(State.Turn.WHITEWIN)) {
-                return -1;
+                return Double.NEGATIVE_INFINITY;
             }
         } else if (player.equals(State.Turn.WHITE)) {
             if (state.getTurn().equals(State.Turn.BLACKWIN)) {
-                return -1;
+                return Double.NEGATIVE_INFINITY;
             } else if (state.getTurn().equals(State.Turn.WHITEWIN)) {
-                return 1;
+                return Double.POSITIVE_INFINITY;
             }
         }
         return 0;

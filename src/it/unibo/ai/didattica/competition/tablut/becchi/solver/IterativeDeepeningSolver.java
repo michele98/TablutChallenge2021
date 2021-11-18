@@ -2,6 +2,9 @@ package it.unibo.ai.didattica.competition.tablut.becchi.solver;
 
 import aima.core.search.adversarial.Game;
 import aima.core.search.adversarial.IterativeDeepeningAlphaBetaSearch;
+import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.BecchiBlackHeuristic;
+import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.BecchiWhiteHeuristic;
+import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 
@@ -17,9 +20,20 @@ public class IterativeDeepeningSolver extends IterativeDeepeningAlphaBetaSearch<
 
     @Override
     protected double eval(State state, State.Turn player) {
-        //TODO: implement heuristic
-        double value = super.eval(state, player);
-        return value;
+
+        if (game.isTerminal(state)) {
+            return super.eval(state,player);
+        }
+        super.eval(state,player);
+
+        // TODO: check if is better considering state.getTurn() instead of player
+        Heuristic heuristic;
+        if (player.equals(State.Turn.WHITE)) {
+            heuristic = new BecchiWhiteHeuristic();
+        } else {
+            heuristic = new BecchiBlackHeuristic();
+        }
+        return  heuristic.getValue(state);
     }
 
     @Override
