@@ -1,6 +1,8 @@
 package it.unibo.ai.didattica.competition.tablut.becchi.client;
 
 import it.unibo.ai.didattica.competition.tablut.becchi.domain.GameBecchiTablut;
+import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.BecchiBlackHeuristic;
+import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
 import it.unibo.ai.didattica.competition.tablut.becchi.player.PlayerBecco;
 import it.unibo.ai.didattica.competition.tablut.becchi.player.PlayerBeccoBlack;
 import it.unibo.ai.didattica.competition.tablut.becchi.player.PlayerBeccoWhite;
@@ -37,6 +39,9 @@ public class TablutBecchiClient extends TablutClient {
     }
 
     public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException {
+        Heuristic h = new BecchiBlackHeuristic();
+        h.getValue(null);
+
         String role = "";
         String name = "Becchi";
         String ipAddress = "localhost";
@@ -46,17 +51,17 @@ public class TablutBecchiClient extends TablutClient {
             System.out.println("You must specify which player you are (WHITE or BLACK)");
             System.exit(-1);
         } else {
-            System.out.println(args[0]);
+            System.out.println("Selected client: " + args[0]);
             role = (args[0]);
         }
         if (args.length == 2) {
-            System.out.println(args[1]);
             timeout = Integer.parseInt(args[1]);
         }
         if (args.length == 3) {
             ipAddress = args[2];
         }
-        System.out.println("Selected client: " + args[0]);
+
+        System.out.println("Timeout: " + timeout + "s");
 
         TablutBecchiClient client = new TablutBecchiClient(role, name, timeout, ipAddress);
         client.run();
@@ -64,10 +69,14 @@ public class TablutBecchiClient extends TablutClient {
         // kill client retrieving the move
     }
 
+    private void printBecchiSignature() {
+        System.out.println("Noi siamo i Vincitori Becchi");
+    }
+
     private void sendActionToServer(Action a) {
-        System.out.println("Mossa scelta: " + a.toString());
         try {
             this.write(a);
+            System.out.println("Action sent to server.");
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
         }
@@ -82,6 +91,7 @@ public class TablutBecchiClient extends TablutClient {
 
         State state = new StateTablut();
         state.setTurn(State.Turn.WHITE);
+        printBecchiSignature();
         System.out.println("Ashton Tablut game");
 
         List<int[]> pawns = new ArrayList<int[]>();
@@ -97,7 +107,7 @@ public class TablutBecchiClient extends TablutClient {
                 e1.printStackTrace();
                 System.exit(1);
             }
-            System.out.println("\nCurrent state:");
+            System.out.println("\nThe current state is:");
             state = this.getCurrentState();
             System.out.println(state.toString());
 
@@ -126,6 +136,7 @@ public class TablutBecchiClient extends TablutClient {
 
             if (this.getPlayer().equals(this.getCurrentState().getTurn())) {
                 try {
+                    System.out.println("Your turn");
                     sendActionToServer(becco.getOptimalAction(state, true));
                 } catch (IOException e) {
                     e.printStackTrace();

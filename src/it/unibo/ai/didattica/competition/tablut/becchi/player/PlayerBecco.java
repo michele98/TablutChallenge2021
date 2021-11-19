@@ -14,6 +14,7 @@ import java.io.IOException;
 public abstract class PlayerBecco {
     private final State.Turn color;
     private final AdversarialSearch<State, Action> solver;
+    private Action previousAction = null;
 
     public PlayerBecco(State.Turn color, int timeout, GameBecchiTablut game, Heuristic heuristic) {
         this.color = color;
@@ -25,7 +26,8 @@ public abstract class PlayerBecco {
     }
 
     public Action getOptimalAction (State state) throws IOException {
-        return solver.makeDecision(state);
+        previousAction = solver.makeDecision(state);
+        return previousAction;
     }
 
     public Action getOptimalAction(State state, boolean verbose) throws IOException {
@@ -40,9 +42,10 @@ public abstract class PlayerBecco {
 
     public String getMetrics() {
         Metrics metrics = solver.getMetrics();
-        String message = "Summary of search:";
-        message += "\n - Maximum depth = " + metrics.get("maxDepth");
-        message += "\n - Nodes expanded = " + metrics.get("nodesExpanded");
+        String message = "Search summary:";
+        message += "\n - Maximum depth: " + metrics.get("maxDepth");
+        message += "\n - Nodes expanded: " + metrics.get("nodesExpanded");
+        message += "\n - Action chosen: " + previousAction.toString();
         return message;
     }
 

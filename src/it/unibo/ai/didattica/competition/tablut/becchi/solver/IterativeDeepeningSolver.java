@@ -8,7 +8,7 @@ import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 
-import java.util.List;
+import java.util.*;
 
 public class IterativeDeepeningSolver extends IterativeDeepeningAlphaBetaSearch<State, Action, State.Turn> {
 
@@ -17,6 +17,7 @@ public class IterativeDeepeningSolver extends IterativeDeepeningAlphaBetaSearch<
     public IterativeDeepeningSolver(Game<State, Action, State.Turn> game, double utilMin, double utilMax, int time, Heuristic heuristic) {
         super(game, utilMin, utilMax, time);
         this.heuristic = heuristic;
+        this.setLogEnabled(true);
     }
 
     @Override
