@@ -1,8 +1,6 @@
 package it.unibo.ai.didattica.competition.tablut.becchi.client;
 
 import it.unibo.ai.didattica.competition.tablut.becchi.domain.GameBecchiTablut;
-import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.BecchiBlackHeuristic;
-import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
 import it.unibo.ai.didattica.competition.tablut.becchi.player.PlayerBecco;
 import it.unibo.ai.didattica.competition.tablut.becchi.player.PlayerBeccoBlack;
 import it.unibo.ai.didattica.competition.tablut.becchi.player.PlayerBeccoWhite;
@@ -11,8 +9,6 @@ import it.unibo.ai.didattica.competition.tablut.domain.*;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TablutBecchiClient extends TablutClient {
 
@@ -21,7 +17,7 @@ public class TablutBecchiClient extends TablutClient {
     public TablutBecchiClient(String player, String name, int timeout, String ipAddress) throws UnknownHostException, IOException {
         super(player, name, timeout, ipAddress);
 
-        GameBecchiTablut game = new GameBecchiTablut(0, -1, "garbage", "client_w", "client_b");
+        GameBecchiTablut game = new GameBecchiTablut(0, 0, "garbage", "client_w", "client_b");
 
         if (this.getPlayer().equals(State.Turn.WHITE)) {
             becco = new PlayerBeccoWhite(timeout, game);
@@ -39,9 +35,6 @@ public class TablutBecchiClient extends TablutClient {
     }
 
     public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException {
-        Heuristic h = new BecchiBlackHeuristic();
-        h.getValue(null);
-
         String role = "";
         String name = "Becchi";
         String ipAddress = "localhost";
@@ -65,8 +58,6 @@ public class TablutBecchiClient extends TablutClient {
 
         TablutBecchiClient client = new TablutBecchiClient(role, name, timeout, ipAddress);
         client.run();
-        // sleep
-        // kill client retrieving the move
     }
 
     private void printBecchiSignature() {
@@ -93,9 +84,6 @@ public class TablutBecchiClient extends TablutClient {
         state.setTurn(State.Turn.WHITE);
         printBecchiSignature();
         System.out.println("Ashton Tablut game");
-
-        List<int[]> pawns = new ArrayList<int[]>();
-        List<int[]> empty = new ArrayList<int[]>();
 
         System.out.println(this.getName() + ", you are player " + this.getPlayer().toString() + "!");
 
