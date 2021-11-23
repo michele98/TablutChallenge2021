@@ -208,9 +208,9 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
     }
 
     private static class ActionStore {
-        private List<Action> actions;
-        private List<Double> utilValues;
-        private List<Integer> order;
+        private final List<Action> actions;
+        private final List<Double> utilValues;
+        private final List<Integer> order;
 
         private ActionStore() {
             this.actions = new ArrayList<>();
@@ -219,8 +219,10 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
         }
 
         void add(Action action, double utilValue) {
-            int idx;
-            for(idx = 0; idx < this.actions.size() && utilValue <= (Double)this.utilValues.get(idx); ++idx) {
+            int idx = 0;
+
+            while(idx < this.actions.size() && utilValue <= this.utilValues.get(idx)) {
+                idx++;
             }
 
             this.actions.add(idx, action);
