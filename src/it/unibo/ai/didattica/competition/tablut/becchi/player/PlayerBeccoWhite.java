@@ -13,7 +13,7 @@ public class PlayerBeccoWhite extends PlayerBecco {
     public PlayerBeccoWhite(int timeout, GameBecchiTablut game) {
         super();
         // TODO: change OurHeuristics to beat BecchiHeuristics
-        Heuristic heuristic = new BecchiWhiteHeuristic();
+        Heuristic heuristic = new OurBecchiWhiteHeuristic();
         AdversarialSearch<State, Action> solver = new BecchiIterativeDeepeningSolver(game, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, timeout, heuristic);
         this.setSolver(solver);
     }

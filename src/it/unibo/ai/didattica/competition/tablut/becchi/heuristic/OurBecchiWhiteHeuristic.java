@@ -4,9 +4,11 @@ import it.unibo.ai.didattica.competition.tablut.domain.State;
 
 public class OurBecchiWhiteHeuristic implements Heuristic{
 
+    Heuristic black = new BecchiBlackHeuristic();
+    Heuristic white = new BecchiWhiteHeuristic();
+
     @Override
     public double getValue(State state) {
-
-        return 0;
+        return white.getValue(state) - black.getValue(state);
     }
 }
