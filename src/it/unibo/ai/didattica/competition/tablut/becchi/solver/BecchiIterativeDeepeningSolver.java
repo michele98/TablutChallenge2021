@@ -103,7 +103,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             for(Iterator<Action> var10 = actions.iterator(); var10.hasNext(); alpha = Math.max(alpha, value)) {
                 Action action = var10.next();
                 State newState = this.game.getResult(state, action);
-                if (visited.contains(state.toLinearString())) {
+                if (visited.contains(newState.toLinearString())) {
                     newState.setTurn(State.Turn.DRAW);
                 }
                 HashSet<String> newVisited = new HashSet<>(visited);
@@ -140,7 +140,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             for(Iterator<Action> var10 = actions.iterator(); var10.hasNext(); beta = Math.min(beta, value)) {
                 Action action = var10.next();
                 State newState = this.game.getResult(state, action);
-                if (visited.contains(state.toLinearString())) {
+                if (visited.contains(newState.toLinearString())) {
                     newState.setTurn(State.Turn.DRAW);
                 }
                 HashSet<String> newVisited = new HashSet<>(visited);
