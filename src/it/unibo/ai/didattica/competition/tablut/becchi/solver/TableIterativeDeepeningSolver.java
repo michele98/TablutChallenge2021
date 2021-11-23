@@ -1,5 +1,6 @@
 package it.unibo.ai.didattica.competition.tablut.becchi.solver;
 
+import aima.core.search.adversarial.AdversarialSearch;
 import aima.core.search.adversarial.Game;
 import aima.core.search.adversarial.IterativeDeepeningAlphaBetaSearch;
 import aima.core.search.framework.Metrics;
@@ -13,7 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TableIterativeDeepeningSolver {
+public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Action> {
     public static final String METRICS_NODES_EXPANDED = "nodesExpanded";
     public static final String METRICS_MAX_DEPTH = "maxDepth";
     protected Game<State, Action, State.Turn> game;
@@ -40,6 +41,7 @@ public class TableIterativeDeepeningSolver {
         this.logEnabled = b;
     }
 
+    @Override
     public Action makeDecision(State state) {
         this.metrics = new Metrics();
         StringBuffer logText = null;
@@ -138,6 +140,7 @@ public class TableIterativeDeepeningSolver {
         this.metrics.set("maxDepth", Math.max(this.metrics.getInt("maxDepth"), depth));
     }
 
+    @Override
     public Metrics getMetrics() {
         return this.metrics;
     }
