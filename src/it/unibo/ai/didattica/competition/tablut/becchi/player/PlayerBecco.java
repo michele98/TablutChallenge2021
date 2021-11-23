@@ -3,31 +3,16 @@ package it.unibo.ai.didattica.competition.tablut.becchi.player;
 import aima.core.search.adversarial.AdversarialSearch;
 
 import aima.core.search.framework.Metrics;
-import it.unibo.ai.didattica.competition.tablut.becchi.domain.GameBecchiTablut;
-import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
-import it.unibo.ai.didattica.competition.tablut.becchi.solver.BecchiIterativeDeepeningSolver;
-import it.unibo.ai.didattica.competition.tablut.becchi.solver.IterativeDeepeningSolver;
-import it.unibo.ai.didattica.competition.tablut.becchi.solver.TableIterativeDeepeningSolver;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 
 import java.io.IOException;
 
 public abstract class PlayerBecco {
-    private final State.Turn color;
-    private final BecchiIterativeDeepeningSolver solver;
+    private AdversarialSearch<State,Action> solver;
     private Action previousAction = null;
 
-    public PlayerBecco(State.Turn color, int timeout, GameBecchiTablut game, Heuristic heuristic) {
-        this.color = color;
-        this.solver = new BecchiIterativeDeepeningSolver(game, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, timeout, heuristic);
-    }
-
-    public State.Turn getColor() {
-        return color;
-    }
-
-    public Action getOptimalAction (State state) throws IOException {
+    public Action getOptimalAction (State state) {
         previousAction = solver.makeDecision(state);
         return previousAction;
     }
@@ -53,5 +38,9 @@ public abstract class PlayerBecco {
 
     public void printMetrics() {
         System.out.println(getMetrics());
+    }
+
+    public void setSolver(AdversarialSearch<State,Action> solver) {
+        this.solver = solver;
     }
 }

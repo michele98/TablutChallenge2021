@@ -1,5 +1,6 @@
 package it.unibo.ai.didattica.competition.tablut.becchi.solver;
 
+import aima.core.search.adversarial.AdversarialSearch;
 import aima.core.search.adversarial.Game;
 import aima.core.search.framework.Metrics;
 import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
@@ -9,7 +10,7 @@ import it.unibo.ai.didattica.competition.tablut.domain.State;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class BecchiIterativeDeepeningSolver {
+public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,Action> {
     public static final String METRICS_NODES_EXPANDED = "nodesExpanded";
     public static final String METRICS_MAX_DEPTH = "maxDepth";
     protected Game<State, Action, State.Turn> game;
@@ -17,7 +18,7 @@ public class BecchiIterativeDeepeningSolver {
     protected double utilMin;
     protected int currDepthLimit;
     private boolean heuristicEvaluationUsed;
-    private Timer timer;
+    private final Timer timer;
     private boolean logEnabled;
     private Metrics metrics = new Metrics();
     private final Heuristic heuristic;
@@ -36,6 +37,7 @@ public class BecchiIterativeDeepeningSolver {
         this.logEnabled = b;
     }
 
+    @Override
     public Action makeDecision(State state) {
         this.metrics = new Metrics();
         StringBuffer logText = null;
@@ -57,7 +59,9 @@ public class BecchiIterativeDeepeningSolver {
             List<ActionStore> childInfos = new ArrayList<>();
             while(var6.hasNext()) {
                 Action action = var6.next();
-                ActionStore childInfo = this.minValue(this.game.getResult(state, action), player, -1.0D / 0.0, 1.0D / 0.0, 1);
+                HashSet<String> visited = new HashSet<>();
+                visited.add(state.toLinearString());
+                ActionStore childInfo = this.minValue(this.game.getResult(state, action), player, -1.0D / 0.0, 1.0D / 0.0, 1, visited);
                 childInfos.add(childInfo);
                 double value = -1 * childInfo.utilValues.get(0);
                 if (this.timer.timeOutOccured()) {
@@ -89,7 +93,7 @@ public class BecchiIterativeDeepeningSolver {
         return results.get(0);
     }
 
-    public ActionStore maxValue(State state, State.Turn player, double alpha, double beta, int depth) {
+    public ActionStore maxValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         this.updateMetrics(depth);
         ActionStore newResults = new ActionStore();
         if (!this.game.isTerminal(state) && depth < this.currDepthLimit && !this.timer.timeOutOccured()) {
@@ -98,7 +102,13 @@ public class BecchiIterativeDeepeningSolver {
             List<ActionStore> childInfos = new ArrayList<>();
             for(Iterator<Action> var10 = actions.iterator(); var10.hasNext(); alpha = Math.max(alpha, value)) {
                 Action action = var10.next();
-                ActionStore childInfo = this.minValue(this.game.getResult(state, action), player, alpha, beta, depth + 1);
+                State newState = this.game.getResult(state, action);
+                if (visited.contains(state.toLinearString())) {
+                    newState.setTurn(State.Turn.DRAW);
+                }
+                HashSet<String> newVisited = new HashSet<>(visited);
+                newVisited.add(newState.toLinearString());
+                ActionStore childInfo = this.minValue(newState, player, alpha, beta, depth + 1, newVisited);
                 childInfos.add(childInfo);
                 value = Math.max(value, -1 * childInfo.utilValues.get(0));
                 newResults.add(action,value);
@@ -120,7 +130,7 @@ public class BecchiIterativeDeepeningSolver {
         }
     }
 
-    public ActionStore minValue(State state, State.Turn player, double alpha, double beta, int depth) {
+    public ActionStore minValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         this.updateMetrics(depth);
         ActionStore newResults = new ActionStore();
         if (!this.game.isTerminal(state) && depth < this.currDepthLimit && !this.timer.timeOutOccured()) {
@@ -129,7 +139,13 @@ public class BecchiIterativeDeepeningSolver {
             List<ActionStore> childInfos = new ArrayList<>();
             for(Iterator<Action> var10 = actions.iterator(); var10.hasNext(); beta = Math.min(beta, value)) {
                 Action action = var10.next();
-                ActionStore childInfo = this.maxValue(this.game.getResult(state, action), player, alpha, beta, depth + 1);
+                State newState = this.game.getResult(state, action);
+                if (visited.contains(state.toLinearString())) {
+                    newState.setTurn(State.Turn.DRAW);
+                }
+                HashSet<String> newVisited = new HashSet<>(visited);
+                newVisited.add(newState.toLinearString());
+                ActionStore childInfo = this.maxValue(newState, player, alpha, beta, depth + 1, newVisited);
                 childInfos.add(childInfo);
                 value = Math.min(value, childInfo.utilValues.get(0));
                 newResults.add(action,-1*value);
@@ -156,6 +172,7 @@ public class BecchiIterativeDeepeningSolver {
         this.metrics.set("maxDepth", Math.max(this.metrics.getInt("maxDepth"), depth));
     }
 
+    @Override
     public Metrics getMetrics() {
         return this.metrics;
     }
