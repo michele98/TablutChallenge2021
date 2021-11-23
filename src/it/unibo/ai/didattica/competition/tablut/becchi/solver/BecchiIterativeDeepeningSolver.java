@@ -23,6 +23,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
     private Metrics metrics = new Metrics();
     private final Heuristic heuristic;
     private final HashMap<Integer,List<Integer>> orders = new HashMap<>();
+    private final HashSet<String> pastStates = new HashSet<>();
 
     public BecchiIterativeDeepeningSolver(Game<State, Action, State.Turn> game, double utilMin, double utilMax, int time, Heuristic heuristic) {
         this.game = game;
@@ -39,6 +40,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
 
     @Override
     public Action makeDecision(State state) {
+        pastStates.add(state.toLinearString());
         this.metrics = new Metrics();
         StringBuffer logText = null;
         State.Turn player = this.game.getPlayer(state);
@@ -59,8 +61,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             List<ActionStore> childInfos = new ArrayList<>();
             while(var6.hasNext()) {
                 Action action = var6.next();
-                HashSet<String> visited = new HashSet<>();
-                visited.add(state.toLinearString());
+                HashSet<String> visited = new HashSet<>(pastStates);
                 ActionStore childInfo = this.minValue(this.game.getResult(state, action), player, -1.0D / 0.0, 1.0D / 0.0, 1, visited);
                 childInfos.add(childInfo);
                 double value = -1 * childInfo.utilValues.get(0);
@@ -90,7 +91,10 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             }
         } while(!this.timer.timeOutOccured() && this.heuristicEvaluationUsed);
 
-        return results.get(0);
+        Action resultingAction = results.get(0);
+        pastStates.add(this.game.getResult(state, resultingAction).toLinearString());
+
+        return resultingAction;
     }
 
     public ActionStore maxValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
