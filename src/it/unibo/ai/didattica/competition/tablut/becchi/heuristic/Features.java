@@ -151,26 +151,26 @@ public abstract class Features {
         int[] kingPosition= Features.kingPosition(state);
         int col = 0;
         int row = 0;
-        if(!safePositionKing(kingPosition)){
-            if((!(kingPosition[1] > 2 && kingPosition[1] < 6)) &&
-                    (!(kingPosition[0] > 2 && kingPosition[0] < 6))) {
-                //not safe row not safe col
-                col = countFreeColumn(state, kingPosition);
-                row = countFreeRow(state,kingPosition);
-            }
-            if((kingPosition[1] > 2 && kingPosition[1] < 6)){
-                // safe row not safe col
-                row = countFreeRow(state, kingPosition);
-            }
-            if((kingPosition[0] > 2 && kingPosition[0] < 6)) {
-                // safe col not safe row
-                col = countFreeColumn(state, kingPosition);
-            }
-            //System.out.println("ROW:"+row);
-            //System.out.println("COL:"+col);
-            return (col + row);
-        }
 
+        if(safePositionKing(kingPosition)) {
+            return 0;
+        }
+        if((!(kingPosition[1] > 2 && kingPosition[1] < 6)) &&
+                (!(kingPosition[0] > 2 && kingPosition[0] < 6))) {
+            //not safe row not safe col
+            col = countFreeColumn(state, kingPosition);
+            row = countFreeRow(state,kingPosition);
+        }
+        if((kingPosition[1] > 2 && kingPosition[1] < 6)){
+            // safe row not safe col
+            row = countFreeRow(state, kingPosition);
+        }
+        if((kingPosition[0] > 2 && kingPosition[0] < 6)) {
+            // safe col not safe row
+            col = countFreeColumn(state, kingPosition);
+        }
+        //System.out.println("ROW:"+row);
+        //System.out.println("COL:"+col);
         return (col + row);
     }
 

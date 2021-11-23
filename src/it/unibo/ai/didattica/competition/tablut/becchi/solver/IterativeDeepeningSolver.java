@@ -22,6 +22,7 @@ public class IterativeDeepeningSolver extends IterativeDeepeningAlphaBetaSearch<
     protected double eval(State state, State.Turn player) {
 
         if (game.isTerminal(state)) {
+            //System.out.println("Terminal state reached in search, for " + state.getTurn());
             return super.eval(state,player);
         }
         super.eval(state,player);

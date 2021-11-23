@@ -2,8 +2,9 @@ package it.unibo.ai.didattica.competition.tablut.becchi.player;
 
 import aima.core.search.adversarial.AdversarialSearch;
 import it.unibo.ai.didattica.competition.tablut.becchi.domain.GameBecchiTablut;
-import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.BecchiWhiteHeuristic;
 import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
+import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.BecchiWhiteHeuristic;
+import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.OurBecchiWhiteHeuristic;
 import it.unibo.ai.didattica.competition.tablut.becchi.solver.BecchiIterativeDeepeningSolver;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
