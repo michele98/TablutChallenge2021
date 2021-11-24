@@ -23,7 +23,6 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
     private Metrics metrics = new Metrics();
     private final Heuristic heuristic;
     private final HashMap<Integer,List<Integer>> orders = new HashMap<>();
-    private final HashSet<String> pastStates = new HashSet<>();
 
     public BecchiIterativeDeepeningSolver(Game<State, Action, State.Turn> game, double utilMin, double utilMax, int time, Heuristic heuristic) {
         this.game = game;
@@ -40,7 +39,6 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
 
     @Override
     public Action makeDecision(State state) {
-        pastStates.add(state.toLinearString());
         this.metrics = new Metrics();
         StringBuffer logText = null;
         State.Turn player = this.game.getPlayer(state);
@@ -58,11 +56,14 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             ActionStore newResults = new ActionStore();
             Iterator<Action> var6 = results.iterator();
 
-            List<ActionStore> childInfos = new ArrayList<>();
+            List<ActionStore> childInfos = new ArrayList<>();// added
             while(var6.hasNext()) {
                 Action action = var6.next();
-                HashSet<String> visited = new HashSet<>(pastStates);
-                ActionStore childInfo = this.minValue(this.game.getResult(state, action), player, -1.0D / 0.0, 1.0D / 0.0, 1, visited);
+
+                HashSet<String> visited = new HashSet<>();
+                visited.add(state.toLinearString());
+
+                ActionStore childInfo = this.minValue(this.game.getResult(state, action), player, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1, visited);
                 childInfos.add(childInfo);
                 double value = -1 * childInfo.utilValues.get(0);
                 if (this.timer.timeOutOccured()) {
@@ -91,17 +92,14 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             }
         } while(!this.timer.timeOutOccured() && this.heuristicEvaluationUsed);
 
-        Action resultingAction = results.get(0);
-        pastStates.add(this.game.getResult(state, resultingAction).toLinearString());
-
-        return resultingAction;
+        return results.get(0);
     }
 
     public ActionStore maxValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         this.updateMetrics(depth);
         ActionStore newResults = new ActionStore();
         if (!this.game.isTerminal(state) && depth < this.currDepthLimit && !this.timer.timeOutOccured()) {
-            double value = -1.0D / 0.0;
+            double value = Double.NEGATIVE_INFINITY;
             List<Action> actions = this.orderActions(state, this.game.getActions(state), player, depth);
             List<ActionStore> childInfos = new ArrayList<>();
             for(Iterator<Action> var10 = actions.iterator(); var10.hasNext(); alpha = Math.max(alpha, value)) {
@@ -120,7 +118,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
                     if (currDepthLimit > depth+1) {
                         orders.put(depth+1,childInfos.get(newResults.order.get(0)).order);
                     }
-                    for (int i = newResults.size(); i < actions.size(); i++) { newResults.append(null,-1.0D / 0.0); }
+                    for (int i = newResults.size(); i < actions.size(); i++) { newResults.append(); }
                     return newResults;
                 }
             }
@@ -138,7 +136,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
         this.updateMetrics(depth);
         ActionStore newResults = new ActionStore();
         if (!this.game.isTerminal(state) && depth < this.currDepthLimit && !this.timer.timeOutOccured()) {
-            double value = 1.0D / 0.0;
+            double value = Double.POSITIVE_INFINITY;
             List<Action> actions = this.orderActions(state, this.game.getActions(state), player, depth);
             List<ActionStore> childInfos = new ArrayList<>();
             for(Iterator<Action> var10 = actions.iterator(); var10.hasNext(); beta = Math.min(beta, value)) {
@@ -157,7 +155,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
                     if (currDepthLimit > depth+1) {
                         orders.put(depth+1,childInfos.get(newResults.order.get(0)).order);
                     }
-                    for (int i = newResults.size(); i < actions.size(); i++) { newResults.append(null,-1.0D / 0.0); }
+                    for (int i = newResults.size(); i < actions.size(); i++) { newResults.append(); }
                     return newResults;
                 }
             }
@@ -234,7 +232,9 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             this.order.add(idx,this.order.size());
         }
 
-        void append(Action action, double utilValue) {
+        void append() {
+            Action action = null;
+            double utilValue = Double.NEGATIVE_INFINITY;
             int idx = this.actions.size();
             this.actions.add(idx, action);
             this.utilValues.add(idx, utilValue);
@@ -247,7 +247,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
     }
 
     private static class Timer {
-        private long duration;
+        private final long duration;
         private long startTime;
 
         Timer(int maxSeconds) {

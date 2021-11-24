@@ -8,10 +8,7 @@ import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Action> {
@@ -22,11 +19,12 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
     protected double utilMin;
     protected int currDepthLimit;
     private boolean heuristicEvaluationUsed;
-    private Timer timer;
+    private final Timer timer;
     private boolean logEnabled;
     private Metrics metrics = new Metrics();
     private final Heuristic heuristic;
     private final HashMap<String,List<Integer>> stateOrders = new HashMap<>();
+    private final HashSet<String> visited = new HashSet<>();
 
     public TableIterativeDeepeningSolver(Game<State, Action, State.Turn> game, double utilMin, double utilMax, int time, Heuristic heuristic) {
         this.game = game;
@@ -44,6 +42,7 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
     @Override
     public Action makeDecision(State state) {
         this.metrics = new Metrics();
+        this.visited.add(state.toLinearString());
         StringBuffer logText = null;
         State.Turn player = this.game.getPlayer(state);
         List<Action> results = this.orderActions(state, this.game.getActions(state), player, 0);
@@ -58,18 +57,18 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
 
             this.heuristicEvaluationUsed = false;
             ActionStore newResults = new ActionStore();
-            Iterator<Action> var6 = results.iterator();
 
-            while(var6.hasNext()) {
-                Action action = var6.next();
-                double value = this.minValue(this.game.getResult(state, action), player, -1.0D / 0.0, 1.0D / 0.0, 1);
+            for (Action action : results) {
+                HashSet<String> visited = new HashSet<>(this.visited);
+                double value = this.minValue(this.game.getResult(state, action), player, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1, visited);
                 if (this.timer.timeOutOccured()) {
                     break;
                 }
 
                 newResults.add(action, value);
                 if (this.logEnabled) {
-                    logText.append(action + "->" + value + " ");
+                    assert logText != null;
+                    logText.append(action).append("->").append(value).append(" ");
                 }
             }
 
@@ -80,27 +79,35 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
             if (newResults.size() > 0) {
                 results = newResults.actions;
                 stateOrders.put(state.toLinearString(),newResults.order);
-                if (!this.timer.timeOutOccured() && (this.hasSafeWinner((Double)newResults.utilValues.get(0)) || newResults.size() > 1 && this.isSignificantlyBetter((Double)newResults.utilValues.get(0), (Double)newResults.utilValues.get(1)))) {
+                if (!this.timer.timeOutOccured() && (this.hasSafeWinner(newResults.utilValues.get(0)) || newResults.size() > 1 && this.isSignificantlyBetter(newResults.utilValues.get(0), newResults.utilValues.get(1)))) {
                     break;
                 }
             }
         } while(!this.timer.timeOutOccured() && this.heuristicEvaluationUsed);
 
-        return results.get(0);
+        Action result = results.get(0);
+        this.visited.add(game.getResult(state,result).toLinearString());
+        return result;
     }
 
-    public double maxValue(State state, State.Turn player, double alpha, double beta, int depth) {
+    public double maxValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         this.updateMetrics(depth);
         if (!this.game.isTerminal(state) && depth < this.currDepthLimit && !this.timer.timeOutOccured()) {
-            double value = -1.0D / 0.0;
+            double value = Double.NEGATIVE_INFINITY;
             ActionStore newResults = new ActionStore();
             List<Action> actions = this.orderActions(state, this.game.getActions(state), player, depth);
             for(Iterator<Action> var10 = actions.iterator(); var10.hasNext(); alpha = Math.max(alpha, value)) {
                 Action action = var10.next();
-                value = Math.max(value, this.minValue(this.game.getResult(state, action), player, alpha, beta, depth + 1));
+                State newState = this.game.getResult(state, action);
+                if (visited.contains(newState.toLinearString())) {
+                    newState.setTurn(State.Turn.DRAW);
+                }
+                HashSet<String> newVisited = new HashSet<>(visited);
+                newVisited.add(newState.toLinearString());
+                value = Math.max(value, this.minValue(newState, player, alpha, beta, depth + 1, newVisited));
                 newResults.add(action,value);
                 if (value >= beta) {
-                    for (int i = newResults.size(); i < actions.size(); i++) { newResults.append(null,-1.0D / 0.0); }
+                    for (int i = newResults.size(); i < actions.size(); i++) { newResults.append(); }
                     stateOrders.put(state.toLinearString(),newResults.order);
                     return value;
                 }
@@ -112,18 +119,24 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
         }
     }
 
-    public double minValue(State state, State.Turn player, double alpha, double beta, int depth) {
+    public double minValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         this.updateMetrics(depth);
         if (!this.game.isTerminal(state) && depth < this.currDepthLimit && !this.timer.timeOutOccured()) {
-            double value = 1.0D / 0.0;
+            double value = Double.POSITIVE_INFINITY;
             ActionStore newResults = new ActionStore();
             List<Action> actions = this.orderActions(state, this.game.getActions(state), player, depth);
             for(Iterator<Action> var10 = actions.iterator(); var10.hasNext(); beta = Math.min(beta, value)) {
                 Action action = var10.next();
-                value = Math.min(value, this.maxValue(this.game.getResult(state, action), player, alpha, beta, depth + 1));
+                State newState = this.game.getResult(state, action);
+                if (visited.contains(newState.toLinearString())) {
+                    newState.setTurn(State.Turn.DRAW);
+                }
+                HashSet<String> newVisited = new HashSet<>(visited);
+                newVisited.add(newState.toLinearString());
+                value = Math.min(value, this.maxValue(newState, player, alpha, beta, depth + 1, newVisited));
                 newResults.add(action,value);
                 if (value <= alpha) {
-                    for (int i = newResults.size(); i < actions.size(); i++) { newResults.append(null,-1.0D / 0.0); }
+                    for (int i = newResults.size(); i < actions.size(); i++) { newResults.append(); }
                     stateOrders.put(state.toLinearString(),newResults.order);
                     return value;
                 }
@@ -175,9 +188,9 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
     }
 
     private static class ActionStore {
-        private List<Action> actions;
-        private List<Double> utilValues;
-        private List<Integer> order;
+        private final List<Action> actions;
+        private final List<Double> utilValues;
+        private final List<Integer> order;
 
         private ActionStore() {
             this.actions = new ArrayList<>();
@@ -186,8 +199,10 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
         }
 
         void add(Action action, double utilValue) {
-            int idx;
-            for(idx = 0; idx < this.actions.size() && utilValue <= (Double)this.utilValues.get(idx); ++idx) {
+            int idx = 0;
+
+            while(idx < this.actions.size() && utilValue <= this.utilValues.get(idx)) {
+                idx++;
             }
 
             this.actions.add(idx, action);
@@ -195,7 +210,9 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
             this.order.add(idx,this.order.size());
         }
 
-        void append(Action action, double utilValue) {
+        void append() {
+            Action action = null;
+            double utilValue = Double.NEGATIVE_INFINITY;
             int idx = this.actions.size();
             this.actions.add(idx, action);
             this.utilValues.add(idx, utilValue);
@@ -208,7 +225,7 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
     }
 
     private static class Timer {
-        private long duration;
+        private final long duration;
         private long startTime;
 
         Timer(int maxSeconds) {
