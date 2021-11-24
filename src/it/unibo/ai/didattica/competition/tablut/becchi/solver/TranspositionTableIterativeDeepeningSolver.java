@@ -7,9 +7,7 @@ import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class TranspositionTableIterativeDeepeningSolver implements AdversarialSearch<State, Action> {
 
@@ -27,7 +25,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     private Metrics metrics = new Metrics();
     private final Heuristic heuristic;
 
-    private HashMap<String, Double> transpositionTable = new HashMap<>();
+    private TranspositionTable transpositionTable = new TranspositionTable();
 
     /**
      * Creates a new search object for a given game.
@@ -102,7 +100,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     }
 
     private void clearTranspositionTable() {
-        transpositionTable = new HashMap<>();
+        transpositionTable = new TranspositionTable();
     }
 
     // returns an utility value
@@ -116,14 +114,14 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
             State resultingState = game.getResult(state, action);
             String resultingStateString = resultingState.toLinearString();
 
-            if (transpositionTable.containsKey(resultingStateString)) {
-                return transpositionTable.get(resultingStateString);
+            if (transpositionTable.hasAlreadyEvaluated(resultingStateString, depth)) {
+                return transpositionTable.getValue(resultingStateString);
             }
 
             value = Math.max(value, minValue(resultingState, //
                     player, alpha, beta, depth + 1));
 
-            transpositionTable.put(resultingStateString, value);
+            transpositionTable.put(resultingStateString, value, depth);
 
             if (value >= beta)
                 return value;
@@ -143,14 +141,14 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
             State resultingState = game.getResult(state, action);
             String resultingStateString = resultingState.toLinearString();
 
-            if (transpositionTable.containsKey(resultingStateString)) {
-                return transpositionTable.get(resultingStateString);
+            if (transpositionTable.hasAlreadyEvaluated(resultingStateString, depth)) {
+                return transpositionTable.getValue(resultingStateString);
             }
 
             value = Math.min(value, maxValue(resultingState, //
                     player, alpha, beta, depth + 1));
 
-            transpositionTable.put(resultingStateString, value);
+            transpositionTable.put(resultingStateString, value, depth);
 
             if (value <= alpha)
                 return value;
@@ -184,10 +182,10 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     /**
      * Primitive operation which is used to stop iterative deepening search in
      * situations where a clear best action exists. This implementation returns
-     * always false.
+     * true if the new utility has the maximum value.
      */
     protected boolean isSignificantlyBetter(double newUtility, double utility) {
-        return false;
+        return newUtility == Double.MAX_VALUE;
     }
 
     /**
@@ -203,8 +201,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     /**
      * Primitive operation, which estimates the value for (not necessarily
      * terminal) states. This implementation returns the utility value for
-     * terminal states and <code>(utilMin + utilMax) / 2</code> for non-terminal
-     * states. When overriding, first call the super implementation!
+     * terminal states and the given heuristic for non-terminal states
      */
     protected double eval(State state, State.Turn player) {
         if (game.isTerminal(state)) {
@@ -216,15 +213,46 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     }
 
     /**
-     * Primitive operation for action ordering. This implementation preserves
-     * the original order (provided by the game).
+     * Primitive operation for action ordering. This implementation shuffles the
+     * actions randomly.
      */
     public List<Action> orderActions(State state, List<Action> actions, State.Turn player, int depth) {
+        Collections.shuffle(actions);
         return actions;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // nested helper classes
+
+    private static class TranspositionTable {
+        private final HashMap<String, Double> valueTable = new HashMap<>(); //stores the utility values of the explored states
+        private final HashMap<String, Integer> depthTable = new HashMap<>(); //stores the depths at which the states were encountered
+
+        //overwrites any old depth value
+        void put(String state, double value, int depth) {
+            valueTable.put(state, value);
+            depthTable.put(state, depth);
+        }
+
+        /*
+         * if the node corresponding to the given state is at an equal or greater depth
+         * the node with the same state already evaluated before, it is not necessary to
+         * re-evaluate it.
+         * If the same node is encountered at a shallower depth ds, the subtree expanded
+         * from there brings additional information.
+         */
+        boolean hasAlreadyEvaluated(String state, int newDepth) {
+            return valueTable.containsKey(state) && newDepth >= depthTable.get(state);
+        }
+
+        double getValue(String state) {
+            return valueTable.get(state);
+        }
+
+        double getDepth(String state) {
+            return depthTable.get(state);
+        }
+    }
 
     private static class Timer {
         private final long duration;
