@@ -7,6 +7,7 @@ import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.BecchiWhiteHeur
 import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
 import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.OurBecchiBlackHeuristic;
 import it.unibo.ai.didattica.competition.tablut.becchi.solver.BecchiIterativeDeepeningSolver;
+import it.unibo.ai.didattica.competition.tablut.becchi.solver.TableIterativeDeepeningSolver;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 
@@ -14,8 +15,8 @@ public class PlayerBeccoBlack extends PlayerBecco {
     public PlayerBeccoBlack(int timeout, GameBecchiTablut game) {
         super();
         // TODO: change OurHeuristics to beat BecchiHeuristics
-        Heuristic heuristic = new OurBecchiBlackHeuristic();
-        AdversarialSearch<State, Action> solver = new BecchiIterativeDeepeningSolver(game, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, timeout, heuristic);
+        Heuristic heuristic = new BecchiBlackHeuristic();
+        AdversarialSearch<State, Action> solver = new TableIterativeDeepeningSolver(game, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, timeout, heuristic);
         this.setSolver(solver);
     }
 }
