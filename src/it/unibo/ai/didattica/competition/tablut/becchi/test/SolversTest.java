@@ -8,6 +8,7 @@ import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
 import it.unibo.ai.didattica.competition.tablut.becchi.solver.BecchiIterativeDeepeningSolver;
 import it.unibo.ai.didattica.competition.tablut.becchi.solver.IterativeDeepeningSolver;
 import it.unibo.ai.didattica.competition.tablut.becchi.solver.TableIterativeDeepeningSolver;
+import it.unibo.ai.didattica.competition.tablut.becchi.solver.TranspositionTableIterativeDeepeningSolver;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 import it.unibo.ai.didattica.competition.tablut.domain.StateTablut;
@@ -24,7 +25,7 @@ class SolversTest {
         int timeout = 20;
         GameBecchiTablut game = new GameBecchiTablut(0, 0, "garbage", "client_w", "client_b");
         Heuristic heuristic = new BecchiWhiteHeuristic();
-        AdversarialSearch<State, Action> solver = new IterativeDeepeningSolver(game, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, timeout, heuristic);
+        AdversarialSearch<State, Action> solver = new BecchiIterativeDeepeningSolver(game, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, timeout, heuristic);
 
         State.Pawn[][] board = new State.Pawn[9][9];
 

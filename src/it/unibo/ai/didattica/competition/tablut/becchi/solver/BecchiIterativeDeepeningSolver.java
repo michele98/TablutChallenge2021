@@ -23,6 +23,8 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
     private Metrics metrics = new Metrics();
     private final Heuristic heuristic;
     private final HashMap<Integer,List<Integer>> orders = new HashMap<>();
+    TranspositionTable transpositionTable;
+    private final HashSet<String> visited = new HashSet<>();
 
     public BecchiIterativeDeepeningSolver(Game<State, Action, State.Turn> game, double utilMin, double utilMax, int time, Heuristic heuristic) {
         this.game = game;
@@ -40,6 +42,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
     @Override
     public Action makeDecision(State state) {
         this.metrics = new Metrics();
+        this.visited.add(state.toLinearString());
         StringBuffer logText = null;
         State.Turn player = this.game.getPlayer(state);
         List<Action> results = this.orderActions(state, this.game.getActions(state), player, 0);
@@ -47,6 +50,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
         this.currDepthLimit = 0;
 
         do {
+            clearTranspositionTable();
             this.incrementDepthLimit();
             if (this.logEnabled) {
                 logText = new StringBuffer("depth " + this.currDepthLimit + ": ");
@@ -60,10 +64,9 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             while(var6.hasNext()) {
                 Action action = var6.next();
 
-                HashSet<String> visited = new HashSet<>();
-                visited.add(state.toLinearString());
-
-                ActionStore childInfo = this.minValue(this.game.getResult(state, action), player, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1, visited);
+                HashSet<String> visited = new HashSet<>(this.visited);
+                State newState = this.game.getResult(state, action);
+                ActionStore childInfo = this.minValue(newState, player, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1, visited);
                 childInfos.add(childInfo);
                 double value = -1 * childInfo.utilValues.get(0);
                 if (this.timer.timeOutOccured()) {
@@ -72,7 +75,8 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
 
                 newResults.add(action, value);
                 if (this.logEnabled) {
-                    logText.append(action + "->" + value + " ");
+                    assert logText != null;
+                    logText.append(action).append("->").append(value).append(" ");
                 }
             }
 
@@ -92,12 +96,19 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             }
         } while(!this.timer.timeOutOccured() && this.heuristicEvaluationUsed);
 
-        return results.get(0);
+        Action result = results.get(0);
+        this.visited.add(game.getResult(state,result).toLinearString());
+        return result;
     }
 
     public ActionStore maxValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         this.updateMetrics(depth);
         ActionStore newResults = new ActionStore();
+        String stateString = state.toLinearString();
+        if (transpositionTable.hasAlreadyEvaluated(stateString, depth)) {
+            newResults.add(null,transpositionTable.getValue(stateString));
+            return newResults;
+        }
         if (!this.game.isTerminal(state) && depth < this.currDepthLimit && !this.timer.timeOutOccured()) {
             double value = Double.NEGATIVE_INFINITY;
             List<Action> actions = this.orderActions(state, this.game.getActions(state), player, depth);
@@ -112,8 +123,10 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
                 newVisited.add(newState.toLinearString());
                 ActionStore childInfo = this.minValue(newState, player, alpha, beta, depth + 1, newVisited);
                 childInfos.add(childInfo);
-                value = Math.max(value, -1 * childInfo.utilValues.get(0));
-                newResults.add(action,value);
+                double currentValue = -1 * childInfo.utilValues.get(0);
+                value = Math.max(value, currentValue);
+                transpositionTable.put(newState.toLinearString(), currentValue, depth + 1);
+                newResults.add(action,currentValue);
                 if (value >= beta) {
                     if (currDepthLimit > depth+1) {
                         orders.put(depth+1,childInfos.get(newResults.order.get(0)).order);
@@ -135,6 +148,11 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
     public ActionStore minValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         this.updateMetrics(depth);
         ActionStore newResults = new ActionStore();
+        String stateString = state.toLinearString();
+        if (transpositionTable.hasAlreadyEvaluated(stateString, depth)) {
+            newResults.add(null,transpositionTable.getValue(stateString));
+            return newResults;
+        }
         if (!this.game.isTerminal(state) && depth < this.currDepthLimit && !this.timer.timeOutOccured()) {
             double value = Double.POSITIVE_INFINITY;
             List<Action> actions = this.orderActions(state, this.game.getActions(state), player, depth);
@@ -149,8 +167,10 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
                 newVisited.add(newState.toLinearString());
                 ActionStore childInfo = this.maxValue(newState, player, alpha, beta, depth + 1, newVisited);
                 childInfos.add(childInfo);
-                value = Math.min(value, childInfo.utilValues.get(0));
-                newResults.add(action,-1*value);
+                double currentValue = childInfo.utilValues.get(0);
+                value = Math.min(value, currentValue);
+                transpositionTable.put(newState.toLinearString(), currentValue, depth + 1);
+                newResults.add(action,-1*currentValue);
                 if (value <= alpha) {
                     if (currDepthLimit > depth+1) {
                         orders.put(depth+1,childInfos.get(newResults.order.get(0)).order);
@@ -164,7 +184,7 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             }
             return newResults;
         } else {
-            newResults.add(null,this.eval(state, player));
+            newResults.add(null,-1 * this.eval(state, player));
             return newResults;
         }
     }
@@ -207,6 +227,40 @@ public class BecchiIterativeDeepeningSolver implements AdversarialSearch<State,A
             }
         }
         return actions;
+    }
+
+    private void clearTranspositionTable() {
+        transpositionTable = new TranspositionTable();
+    }
+
+    private static class TranspositionTable {
+        private final HashMap<String, Double> valueTable = new HashMap<>(); //stores the utility values of the explored states
+        private final HashMap<String, Integer> depthTable = new HashMap<>(); //stores the depths at which the states were encountered
+
+        //overwrites any old depth value
+        void put(String state, double value, int depth) {
+            valueTable.put(state, value);
+            depthTable.put(state, depth);
+        }
+
+        /*
+         * if the node corresponding to the given state is at an equal or greater depth
+         * the node with the same state already evaluated before, it is not necessary to
+         * re-evaluate it.
+         * If the same node is encountered at a shallower depth ds, the subtree expanded
+         * from there brings additional information.
+         */
+        boolean hasAlreadyEvaluated(String state, int newDepth) {
+            return valueTable.containsKey(state) && newDepth >= depthTable.get(state);
+        }
+
+        double getValue(String state) {
+            return valueTable.get(state);
+        }
+
+        double getDepth(String state) {
+            return depthTable.get(state);
+        }
     }
 
     private static class ActionStore {

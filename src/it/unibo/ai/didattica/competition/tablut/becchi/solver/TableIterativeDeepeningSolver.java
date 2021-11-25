@@ -24,6 +24,7 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
     private Metrics metrics = new Metrics();
     private final Heuristic heuristic;
     private final HashMap<String,List<Integer>> stateOrders = new HashMap<>();
+    private TranspositionTable transpositionTable;
     private final HashSet<String> visited = new HashSet<>();
 
     public TableIterativeDeepeningSolver(Game<State, Action, State.Turn> game, double utilMin, double utilMax, int time, Heuristic heuristic) {
@@ -50,6 +51,7 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
         this.currDepthLimit = 0;
 
         do {
+            clearTranspositionTable();
             this.incrementDepthLimit();
             if (this.logEnabled) {
                 logText = new StringBuffer("depth " + this.currDepthLimit + ": ");
@@ -60,7 +62,8 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
 
             for (Action action : results) {
                 HashSet<String> visited = new HashSet<>(this.visited);
-                double value = this.minValue(this.game.getResult(state, action), player, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1, visited);
+                State newState = this.game.getResult(state, action);
+                double value = this.minValue(newState, player, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1, visited);
                 if (this.timer.timeOutOccured()) {
                     break;
                 }
@@ -92,6 +95,10 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
 
     public double maxValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         this.updateMetrics(depth);
+        String stateString = state.toLinearString();
+        if (transpositionTable.hasAlreadyEvaluated(stateString, depth)) {
+            return transpositionTable.getValue(stateString);
+        }
         if (!this.game.isTerminal(state) && depth < this.currDepthLimit && !this.timer.timeOutOccured()) {
             double value = Double.NEGATIVE_INFINITY;
             ActionStore newResults = new ActionStore();
@@ -104,8 +111,10 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
                 }
                 HashSet<String> newVisited = new HashSet<>(visited);
                 newVisited.add(newState.toLinearString());
-                value = Math.max(value, this.minValue(newState, player, alpha, beta, depth + 1, newVisited));
-                newResults.add(action,value);
+                double currentValue = this.minValue(newState, player, alpha, beta, depth + 1, newVisited);
+                value = Math.max(value, currentValue);
+                transpositionTable.put(newState.toLinearString(), currentValue, depth + 1);
+                newResults.add(action,currentValue);
                 if (value >= beta) {
                     for (int i = newResults.size(); i < actions.size(); i++) { newResults.append(); }
                     stateOrders.put(state.toLinearString(),newResults.order);
@@ -121,6 +130,10 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
 
     public double minValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         this.updateMetrics(depth);
+        String stateString = state.toLinearString();
+        if (transpositionTable.hasAlreadyEvaluated(stateString, depth)) {
+            return transpositionTable.getValue(stateString);
+        }
         if (!this.game.isTerminal(state) && depth < this.currDepthLimit && !this.timer.timeOutOccured()) {
             double value = Double.POSITIVE_INFINITY;
             ActionStore newResults = new ActionStore();
@@ -133,8 +146,10 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
                 }
                 HashSet<String> newVisited = new HashSet<>(visited);
                 newVisited.add(newState.toLinearString());
-                value = Math.min(value, this.maxValue(newState, player, alpha, beta, depth + 1, newVisited));
-                newResults.add(action,value);
+                double currentValue = this.maxValue(newState, player, alpha, beta, depth + 1, newVisited);
+                value = Math.min(value, currentValue);
+                transpositionTable.put(newState.toLinearString(), currentValue, depth + 1);
+                newResults.add(action,currentValue);
                 if (value <= alpha) {
                     for (int i = newResults.size(); i < actions.size(); i++) { newResults.append(); }
                     stateOrders.put(state.toLinearString(),newResults.order);
@@ -185,6 +200,40 @@ public class TableIterativeDeepeningSolver implements AdversarialSearch<State,Ac
             return stateOrders.get(key).stream().map(actions::get).collect(Collectors.toList());
         }
         return actions;
+    }
+
+    private void clearTranspositionTable() {
+        transpositionTable = new TranspositionTable();
+    }
+
+    private static class TranspositionTable {
+        private final HashMap<String, Double> valueTable = new HashMap<>(); //stores the utility values of the explored states
+        private final HashMap<String, Integer> depthTable = new HashMap<>(); //stores the depths at which the states were encountered
+
+        //overwrites any old depth value
+        void put(String state, double value, int depth) {
+            valueTable.put(state, value);
+            depthTable.put(state, depth);
+        }
+
+        /*
+         * if the node corresponding to the given state is at an equal or greater depth
+         * the node with the same state already evaluated before, it is not necessary to
+         * re-evaluate it.
+         * If the same node is encountered at a shallower depth ds, the subtree expanded
+         * from there brings additional information.
+         */
+        boolean hasAlreadyEvaluated(String state, int newDepth) {
+            return valueTable.containsKey(state) && newDepth >= depthTable.get(state);
+        }
+
+        double getValue(String state) {
+            return valueTable.get(state);
+        }
+
+        double getDepth(String state) {
+            return depthTable.get(state);
+        }
     }
 
     private static class ActionStore {

@@ -24,8 +24,9 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
 
     private Metrics metrics = new Metrics();
     private final Heuristic heuristic;
+    private final HashSet<String> visited = new HashSet<>();
 
-    private TranspositionTable transpositionTable = new TranspositionTable();
+    private TranspositionTable transpositionTable;
 
     /**
      * Creates a new search object for a given game.
@@ -63,6 +64,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     @Override
     public Action makeDecision(State state) {
         metrics = new Metrics();
+        this.visited.add(state.toLinearString());
         StringBuffer logText = null;
         State.Turn player = game.getPlayer(state);
         List<Action> results = orderActions(state, game.getActions(state), player, 0);
@@ -76,12 +78,15 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
             heuristicEvaluationUsed = false;
             ActionStore newResults = new ActionStore();
             for (Action action : results) {
-                double value = minValue(game.getResult(state, action), player, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1);
+                HashSet<String> visited = new HashSet<>(this.visited);
+                double value = minValue(game.getResult(state, action), player, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1, visited);
                 if (timer.timeOutOccurred())
                     break; // exit from action loop
                 newResults.add(action, value);
-                if (logEnabled)
+                if (logEnabled) {
+                    assert logText != null;
                     logText.append(action).append("->").append(value).append(" ");
+                }
             }
             if (logEnabled)
                 System.out.println(logText);
@@ -96,7 +101,9 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
                 }
             }
         } while (!timer.timeOutOccurred() && heuristicEvaluationUsed);
-        return results.get(0);
+        Action result = results.get(0);
+        this.visited.add(game.getResult(state,result).toLinearString());
+        return result;
     }
 
     private void clearTranspositionTable() {
@@ -104,7 +111,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     }
 
     // returns an utility value
-    public double maxValue(State state, State.Turn player, double alpha, double beta, int depth) {
+    public double maxValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         updateMetrics(depth);
 
         String stateString = state.toLinearString();
@@ -119,10 +126,16 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         for (Action action : orderActions(state, game.getActions(state), player, depth)) {
             State resultingState = game.getResult(state, action);
 
-            value = Math.max(value, minValue(resultingState, //
-                    player, alpha, beta, depth + 1));
+            if (visited.contains(resultingState.toLinearString())) {
+                resultingState.setTurn(State.Turn.DRAW);
+            }
+            HashSet<String> newVisited = new HashSet<>(visited);
+            newVisited.add(resultingState.toLinearString());
 
-            transpositionTable.put(resultingState.toLinearString(), value, depth + 1);
+            double currentValue = minValue(resultingState, player, alpha, beta, depth + 1, newVisited);
+            value = Math.max(value, currentValue);
+
+            transpositionTable.put(resultingState.toLinearString(), currentValue, depth + 1);
 
             if (value >= beta)
                 return value;
@@ -132,7 +145,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     }
 
     // returns an utility value
-    public double minValue(State state, State.Turn player, double alpha, double beta, int depth) {
+    public double minValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         updateMetrics(depth);
 
         String stateString = state.toLinearString();
@@ -147,10 +160,16 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         for (Action action : orderActions(state, game.getActions(state), player, depth)) {
             State resultingState = game.getResult(state, action);
 
-            value = Math.min(value, maxValue(resultingState, //
-                    player, alpha, beta, depth + 1));
+            if (visited.contains(resultingState.toLinearString())) {
+                resultingState.setTurn(State.Turn.DRAW);
+            }
+            HashSet<String> newVisited = new HashSet<>(visited);
+            newVisited.add(resultingState.toLinearString());
 
-            transpositionTable.put(resultingState.toLinearString(), value, depth + 1);
+            double currentValue = maxValue(resultingState, player, alpha, beta, depth + 1, newVisited);
+            value = Math.min(value, currentValue);
+
+            transpositionTable.put(resultingState.toLinearString(), currentValue, depth + 1);
 
             if (value <= alpha)
                 return value;
@@ -261,7 +280,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         private long startTime;
 
         Timer(int maxSeconds) {
-            this.duration = 1000 * maxSeconds;
+            this.duration = 1000L * maxSeconds;
         }
 
         void start() {
