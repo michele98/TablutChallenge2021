@@ -106,22 +106,23 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     // returns an utility value
     public double maxValue(State state, State.Turn player, double alpha, double beta, int depth) {
         updateMetrics(depth);
+
+        String stateString = state.toLinearString();
+        if (transpositionTable.hasAlreadyEvaluated(stateString, depth)) {
+            return transpositionTable.getValue(stateString);
+        }
+
         if (game.isTerminal(state) || depth >= currDepthLimit || timer.timeOutOccurred()) {
             return eval(state, player);
         }
         double value = Double.NEGATIVE_INFINITY;
         for (Action action : orderActions(state, game.getActions(state), player, depth)) {
             State resultingState = game.getResult(state, action);
-            String resultingStateString = resultingState.toLinearString();
-
-            if (transpositionTable.hasAlreadyEvaluated(resultingStateString, depth)) {
-                return transpositionTable.getValue(resultingStateString);
-            }
 
             value = Math.max(value, minValue(resultingState, //
                     player, alpha, beta, depth + 1));
 
-            transpositionTable.put(resultingStateString, value, depth);
+            transpositionTable.put(resultingState.toLinearString(), value, depth + 1);
 
             if (value >= beta)
                 return value;
@@ -133,22 +134,23 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     // returns an utility value
     public double minValue(State state, State.Turn player, double alpha, double beta, int depth) {
         updateMetrics(depth);
+
+        String stateString = state.toLinearString();
+        if (transpositionTable.hasAlreadyEvaluated(stateString, depth)) {
+            return transpositionTable.getValue(stateString);
+        }
+
         if (game.isTerminal(state) || depth >= currDepthLimit || timer.timeOutOccurred()) {
             return eval(state, player);
         }
         double value = Double.POSITIVE_INFINITY;
         for (Action action : orderActions(state, game.getActions(state), player, depth)) {
             State resultingState = game.getResult(state, action);
-            String resultingStateString = resultingState.toLinearString();
-
-            if (transpositionTable.hasAlreadyEvaluated(resultingStateString, depth)) {
-                return transpositionTable.getValue(resultingStateString);
-            }
 
             value = Math.min(value, maxValue(resultingState, //
                     player, alpha, beta, depth + 1));
 
-            transpositionTable.put(resultingStateString, value, depth);
+            transpositionTable.put(resultingState.toLinearString(), value, depth + 1);
 
             if (value <= alpha)
                 return value;
