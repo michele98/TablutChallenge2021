@@ -3,7 +3,6 @@ package it.unibo.ai.didattica.competition.tablut.becchi.solver;
 import aima.core.search.adversarial.AdversarialSearch;
 import aima.core.search.adversarial.Game;
 import aima.core.search.framework.Metrics;
-import com.sun.org.apache.bcel.internal.generic.FLOAD;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
@@ -28,8 +27,6 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
 
     private final HashSet<String> visited = new HashSet<>();
     private final TranspositionTable transpositionTable = new TranspositionTable();
-
-    protected int transpositionTableLookups = 0;
 
     /**
      * Creates a new search object for a given game.
@@ -119,9 +116,11 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         transpositionTable.saveSearchData(state, value, currDepthLimit, bestActionIndex);
         this.visited.add(game.getResult(state,result).toLinearString());
 
-        transpositionTable.printSize();
-        System.out.println(transpositionTableLookups);
-        transpositionTableLookups = 0;
+        if (logEnabled) {
+            transpositionTable.printSize();
+            transpositionTable.printLookups();
+        }
+        transpositionTable.resetLookups();
         return result;
     }
 
@@ -267,6 +266,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
      * actions randomly.
      */
     public List<Action> orderActions(State state, List<Action> actions, State.Turn player, int depth) {
+        actions = orderActionsAsKingDestination(state, actions);
         if (!transpositionTable.hasState(state)) {
             return actions;
         }
@@ -281,11 +281,38 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         return actions;
     }
 
+    private List<Action> orderActionsAsKingDestination(State state, List<Action> actions) {
+        ActionStore newActions = new ActionStore();
+        int[] kingPos = null;
+        State.Pawn[][] board = state.getBoard();
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board.length; j++) {
+                if (state.getPawn(i, j).equalsPawn("K")) {
+                    kingPos = new int[]{i,j};
+                    break;
+                }
+            }
+            if (kingPos != null) {
+                break;
+            }
+        }
+        for (Action action : actions) {
+            assert kingPos != null;
+            if (action.getRowTo() == kingPos[0] || action.getColumnTo() == kingPos[1]) {
+                newActions.add(action, 1);
+            } else {
+                newActions.add(action,0);
+            }
+        }
+        return newActions.actions;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////
     // nested helper classes
 
     private class TranspositionTable {
-        private final int cacheSize = 1000000;
+        private final int cacheSize = 2000000;
+        private int lookups = 0;
         private final double fractionKept;
         private final HashMap<String, Information> transpositionTable = new HashMap<>(cacheSize*2); //stores the utility values of the explored states
 
@@ -293,7 +320,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
             this.fractionKept = fractionKept;
         }
         public TranspositionTable() {
-            this(0.8);
+            this(0.5);
         }
 
         private class Information {
@@ -346,7 +373,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
 
         boolean hasAlreadyEvaluated(State state, int subtreeDepth) {
             String stateString = state.toLinearString();
-            return transpositionTable.containsKey(stateString) && subtreeDepth < transpositionTable.get(stateString).subtreeDepth;
+            return transpositionTable.containsKey(stateString) && subtreeDepth <= transpositionTable.get(stateString).subtreeDepth;
         }
 
         boolean hasState(State state) {
@@ -354,7 +381,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         }
 
         double getValue(State state) {
-            transpositionTableLookups++;
+            lookups++;
             double value = transpositionTable.get(state.toLinearString()).value;
             return value >= Float.MAX_VALUE ? Double.MAX_VALUE : value;
         }
@@ -364,7 +391,15 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         }
 
         void printSize() {
-            System.out.println("Size of transposition table: " + transpositionTable.size());
+            System.out.println("Transposition table size: " + transpositionTable.size());
+        }
+
+        void printLookups() {
+            System.out.println("Transposition table lookups: " + lookups);
+        }
+
+        void resetLookups() {
+            lookups = 0;
         }
     }
 
