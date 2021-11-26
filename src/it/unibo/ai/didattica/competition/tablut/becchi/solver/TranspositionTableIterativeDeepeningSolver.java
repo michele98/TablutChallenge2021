@@ -3,6 +3,7 @@ package it.unibo.ai.didattica.competition.tablut.becchi.solver;
 import aima.core.search.adversarial.AdversarialSearch;
 import aima.core.search.adversarial.Game;
 import aima.core.search.framework.Metrics;
+import com.sun.org.apache.bcel.internal.generic.FLOAD;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
@@ -76,15 +77,15 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         int bestActionIndex = 0;
         do {
             incrementDepthLimit();
-
-            if (transpositionTable.hasAlreadyEvaluated(state, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, currDepthLimit)) {
-                //TODO: have a look at this again!
-                System.out.println("Decided first action from transposition table");
-                return game.getActions(state).get(transpositionTable.getBestActionIndex(state));
-            }
-
             if (logEnabled)
                 logText = new StringBuffer("depth " + currDepthLimit + ": ");
+
+            if (transpositionTable.hasAlreadyEvaluated(state, currDepthLimit)) {
+                if (logEnabled)
+                    System.out.println(logText);
+                    System.out.println("Decided first action from transposition table");
+                continue;
+            }
             heuristicEvaluationUsed = false;
             ActionStore newResults = new ActionStore();
             for (Action action : results) {
@@ -115,7 +116,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         } while (!timer.timeOutOccurred() && heuristicEvaluationUsed);
         Action result = results.get(0);
 
-        transpositionTable.saveSearchData(state, value, value, value, currDepthLimit, bestActionIndex);
+        transpositionTable.saveSearchData(state, value, currDepthLimit, bestActionIndex);
         this.visited.add(game.getResult(state,result).toLinearString());
 
         transpositionTable.printSize();
@@ -128,12 +129,12 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     public double maxValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         updateMetrics(depth);
 
-        if (transpositionTable.hasAlreadyEvaluated(state, alpha, beta, currDepthLimit - depth)) {
+        if (transpositionTable.hasAlreadyEvaluated(state, currDepthLimit - depth)) {
             return transpositionTable.getValue(state);
         }
         if (game.isTerminal(state) || depth >= currDepthLimit || timer.timeOutOccurred()) {
             double value = eval(state, player);
-            transpositionTable.saveSearchData(state, value, alpha, beta, 0, 0);
+            transpositionTable.saveSearchData(state, value, 0, 0);
             return value;
         }
 
@@ -161,7 +162,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
             alpha = Math.max(alpha, value);
             idx++;
         }
-        transpositionTable.saveSearchData(state, value, alpha, beta, currDepthLimit - depth, bestActionIndex);
+        transpositionTable.saveSearchData(state, value, currDepthLimit - depth, bestActionIndex);
         return value;
     }
 
@@ -169,12 +170,12 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     public double minValue(State state, State.Turn player, double alpha, double beta, int depth, HashSet<String> visited) {
         updateMetrics(depth);
 
-        if (transpositionTable.hasAlreadyEvaluated(state, alpha, beta, currDepthLimit - depth)) {
+        if (transpositionTable.hasAlreadyEvaluated(state, currDepthLimit - depth)) {
             return transpositionTable.getValue(state);
         }
         if (game.isTerminal(state) || depth >= currDepthLimit || timer.timeOutOccurred()) {
             double value = eval(state, player);
-            transpositionTable.saveSearchData(state, value, alpha, beta, 0, 0);
+            transpositionTable.saveSearchData(state, value, 0, 0);
             return value;
         }
 
@@ -202,7 +203,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
             beta = Math.min(beta, value);
             idx++;
         }
-        transpositionTable.saveSearchData(state, value, alpha, beta, currDepthLimit - depth, bestActionIndex);
+        transpositionTable.saveSearchData(state, value, currDepthLimit - depth, bestActionIndex);
         return value;
     }
 
@@ -284,16 +285,22 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     // nested helper classes
 
     private class TranspositionTable {
-        private final int cacheSize = 10000000;
+        private final int cacheSize = 1000000;
+        private final double fractionKept;
         private final HashMap<String, Information> transpositionTable = new HashMap<>(cacheSize*2); //stores the utility values of the explored states
 
+        public TranspositionTable(double fractionKept) {
+            this.fractionKept = fractionKept;
+        }
+        public TranspositionTable() {
+            this(0.8);
+        }
+
         private class Information {
-            public double value;
-            public double lowerBound;
-            public double upperBound;
-            public int subtreeDepth = -1;
-            public int occurrences = 0;
-            public int bestActionIndex = 0;
+            public float value;
+            public byte subtreeDepth = -1;
+            public short occurrences = 0;
+            public short bestActionIndex = 0;
         }
 
         private class OccurrenceComparator implements Comparator<String> {
@@ -303,8 +310,9 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
             }
         }
 
-        private void removeLeastOccurring(double fractionKept) {
-            System.out.println("Truncating transposition cache");
+        private void removeLeastOccurring() {
+            if (logEnabled)
+                System.out.println("Truncating transposition table");
             List<String> sortedKeys = new ArrayList<>(transpositionTable.keySet());
             sortedKeys.sort(new OccurrenceComparator());
 
@@ -318,35 +326,27 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         }
 
         //overwrites any old entry
-        void saveSearchData(State state, double value, double lowerBound, double upperBound, int subtreeDepth, int bestActionIndex) {
+        void saveSearchData(State state, double value, int subtreeDepth, int bestActionIndex) {
             String stateString = state.toLinearString();
 
             Information info = transpositionTable.containsKey(stateString) ? transpositionTable.get(stateString) : new Information();
 
             info.occurrences++;
             if (subtreeDepth > info.subtreeDepth) {
-                info.value = value;
-                info.lowerBound = lowerBound;
-                info.upperBound = upperBound;
-                info.subtreeDepth = subtreeDepth;
-                info.bestActionIndex = bestActionIndex;
+                info.value = value >= Float.MAX_VALUE ? Float.MAX_VALUE : (float) value;
+                info.subtreeDepth = (byte) subtreeDepth;
+                info.bestActionIndex = (short) bestActionIndex;
                 transpositionTable.put(state.toLinearString(), info);
             }
 
             if (transpositionTable.size() >= cacheSize) {
-                removeLeastOccurring(0.8);
+                removeLeastOccurring();
             }
         }
 
-        boolean hasAlreadyEvaluated(State state, double alpha, double beta, int subtreeDepth) {
-            //TODO: remove alpha and beta if it makes sense to do that
+        boolean hasAlreadyEvaluated(State state, int subtreeDepth) {
             String stateString = state.toLinearString();
             return transpositionTable.containsKey(stateString) && subtreeDepth < transpositionTable.get(stateString).subtreeDepth;
-            /*
-            String stateString = state.toLinearString();
-            return transpositionTable.containsKey(stateString) && subtreeDepth < transpositionTable.get(stateString).subtreeDepth &&
-                    (transpositionTable.get(stateString).upperBound <= alpha || transpositionTable.get(stateString).lowerBound >= beta);
-             */
         }
 
         boolean hasState(State state) {
@@ -355,7 +355,8 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
 
         double getValue(State state) {
             transpositionTableLookups++;
-            return transpositionTable.get(state.toLinearString()).value;
+            double value = transpositionTable.get(state.toLinearString()).value;
+            return value >= Float.MAX_VALUE ? Double.MAX_VALUE : value;
         }
 
         int getBestActionIndex(State state) {
