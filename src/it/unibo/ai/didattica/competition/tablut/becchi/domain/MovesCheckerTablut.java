@@ -4,16 +4,15 @@ import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 public class MovesCheckerTablut implements MovesChecker {
 
-    private final boolean [][] campsTop  = new boolean[9][9];
-    private final boolean [][] campsBottom = new boolean[9][9];
-    private final boolean [][] campsLeft  = new boolean[9][9];
-    private final boolean [][] campsRight  = new boolean[9][9];
-    int [] throne = new int[]{4, 4};
+    private final static boolean [][] campsTop  = new boolean[9][9];
+    private final static boolean [][] campsBottom = new boolean[9][9];
+    private final static boolean [][] campsLeft  = new boolean[9][9];
+    private final static boolean [][] campsRight  = new boolean[9][9];
+    private final static int [] throne = new int[]{4, 4};
 
     public MovesCheckerTablut() {
 
@@ -44,7 +43,7 @@ public class MovesCheckerTablut implements MovesChecker {
     }
 
 
-    private boolean checkObstacles(int origin[], int destination[], State state){
+    public static boolean checkObstacles(int origin[], int destination[], State state){
 
         State.Pawn pawnToMove = state.getPawn(origin[0],origin[1]);
         State.Pawn pawnDestination = state.getPawn(destination[0],destination[1]);
