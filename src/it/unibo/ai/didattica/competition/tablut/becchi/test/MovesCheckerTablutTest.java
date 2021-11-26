@@ -63,6 +63,23 @@ class MovesCheckerTablutTest {
         }
 
         System.out.println(elapsedTime*1e-9);
+/*
+        //testing all moves of white players from the start situation
+        s.setTurn(State.Turn.WHITE);
+        long startTime = System.nanoTime();
+        allmoves = m.getAllMovesMultithread(s);
+        long elapsedTime = System.nanoTime() - startTime;
+        System.out.println("Number of moves available: "+allmoves.size());
+        allmoves.forEach(System.out::println);
 
+        for (Action a : allmoves) {
+            s = new StateTablut();
+            s.setTurn(State.Turn.WHITE);
+            g = new GameAshtonTablut(2, -1, "logs", "WP", "BP");
+            g.checkMove(s, a);
+        }
+
+        System.out.println(elapsedTime*1e-9);
+*/
     }
 }

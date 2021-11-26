@@ -1,5 +1,6 @@
 package it.unibo.ai.didattica.competition.tablut.becchi.heuristic;
 
+import it.unibo.ai.didattica.competition.tablut.becchi.domain.MovesCheckerTablut;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 
 import java.util.ArrayList;
@@ -23,51 +24,75 @@ public abstract class Features {
 
     //Threshold used to decide whether to use rhombus configuration
     private final static int THRESHOLD = 10;
-    //Number of tiles on rhombus
-    private final static int NUM_TILES_ON_RHOMBUS = 8;
 
     //Matrix of favourite black positions in initial stages and to block the escape ways
     private final static int[][] rhombus = {
             {1,2},       {1,6},
-            {2,1},                   {2,7},
+    {2,1},                   {2,7},
 
-            {6,1},                   {6,7},
+    {6,1},                   {6,7},
             {7,2},       {7,6}
     };
 
+    //Number of tiles on rhombus
+    private final static int NUM_TILES_ON_RHOMBUS = rhombus.length;
 
+    private final static boolean[][] safePositions = new boolean[9][9];
+
+    static {
+        safePositions[3][4] = true;
+        safePositions[4][4] = true;
+        safePositions[5][4] = true;
+        safePositions[4][3] = true;
+        safePositions[4][5] = true;
+    }
+
+
+    // percentage of white players in the best positions
+    //FIXME Strange positions of white players..
     public static double bestPositions(State state) {
         return (double) getNumberOnBestPositions(state) / NUM_BEST_POSITION;
     }
 
+    // percentage of white players that are still alive
     public static double numberOfWhiteAlive(State state) {
         return (double)(state.getNumberOf(State.Pawn.WHITE)) / NUM_WHITE;
     }
 
+    // percentage of black players that are dead
     public static double numberOfBlackEaten(State state) {
         return (double)(NUM_BLACK - state.getNumberOf(State.Pawn.BLACK)) / NUM_BLACK;
     }
 
+    // percentage of black players FAR from the king (that are not on a side of the king)
     public static double blackSurroundKing(State state) {
-        return (double)(Features.getNumEatenPositions(state) - checkNearPawns(state, kingPosition(state),State.Turn.BLACK.toString())) / getNumEatenPositions(state);
+        //FIXME stupid name
+        int blackKillersRequired = Features.getNumEatenPositions(state);
+        return (double)(blackKillersRequired - checkNearPawns(state, kingPosition(state),State.Turn.BLACK.toString())) / blackKillersRequired;
     }
 
+    // percentage of black players that are alive
+    //FIXME name should be "numberOfBlackAlive"
     public static double numberOfBlack(State state) {
         return (double) state.getNumberOf(State.Pawn.BLACK) / NUM_BLACK;
     }
 
+    //percentage of white players that are dead
     public static double numberOfWhiteEaten(State state) {
         return (double) (NUM_WHITE - state.getNumberOf(State.Pawn.WHITE)) / NUM_WHITE;
     }
 
+    //percentage of killers near the king
     public static double pawnsNearKing(State state) {
         return (double)  checkNearPawns(state, kingPosition(state),State.Turn.BLACK.toString()) / getNumEatenPositions(state);
     }
 
+    //percentage of black pawns in rhombus position (or 0 if black players are under the THRESHOLD)
     public static double numberOfPawnsOnRhombus(State state) {
         return (double) getNumberOnRhombus(state) / NUM_TILES_ON_RHOMBUS;
     }
 
+    //value of protection of the king
     public static double protectionKing(State state){
         //Values whether there is only a white pawn near to the king
         final double VAL_NEAR = 0.6;
@@ -81,7 +106,11 @@ public abstract class Features {
 
         //There is a black pawn that threatens the king and 2 pawns are enough to eat the king
         if (pawnsPositions.size() == 1 && getNumEatenPositions(state) == 2){
-            int[] enemyPos = pawnsPositions.get(0);
+
+            //Here we check if we would be able to protect the king from one black killer
+            // (we check if there's already a white protector)
+
+            int[] enemyPos = pawnsPositions.get(0); //FIXME qui si puo migliorare levando collections o con hashset
             //Used to store other position from where king could be eaten
             int[] targetPosition = new int[2];
             //Enemy right to the king
@@ -118,10 +147,11 @@ public abstract class Features {
                 }
             }
 
-            //Considering whites to use as barriers for the target pawn
+            //Considering (movable) whites that we can use as barriers for the target pawn
             double otherPoints = VAL_TOT - VAL_NEAR;
             double contributionPerN = 0.0;
 
+            //TODO capire questo
             //Whether it is better to keep free the position
             if (targetPosition[0] == 0 || targetPosition[0] == 8 || targetPosition[1] == 0 || targetPosition[1] == 8){
                 if(state.getPawn(targetPosition[0],targetPosition[1]).equalsPawn(State.Pawn.EMPTY.toString())){
@@ -147,34 +177,44 @@ public abstract class Features {
         return result;
     }
 
+    //returns the number of ways through which the king can win (from 0 up to 4)
     public static int countWinWays(State state){
-        int[] kingPosition= Features.kingPosition(state);
+        int[] kingPosition= kingPosition(state);
         int col = 0;
         int row = 0;
 
         if(safePositionKing(kingPosition)) {
             return 0;
         }
+        //TODO here they check that the king is not in the big cross defined by the black camps
+        //FIXME this can be made faster, also: maybe add the king position directly here?
+        /*
         if((!(kingPosition[1] > 2 && kingPosition[1] < 6)) &&
                 (!(kingPosition[0] > 2 && kingPosition[0] < 6))) {
+            //if we are in an unsafe position then it hasn't much sense to consider moves towards the black camps
+            //this, unless the camps are empty...
             //not safe row not safe col
-            col = countFreeColumn(state, kingPosition);
-            row = countFreeRow(state,kingPosition);
-        }
-        if((kingPosition[1] > 2 && kingPosition[1] < 6)){
-            // safe row not safe col
-            row = countFreeRow(state, kingPosition);
-        }
-        if((kingPosition[0] > 2 && kingPosition[0] < 6)) {
-            // safe col not safe row
-            col = countFreeColumn(state, kingPosition);
-        }
-        //System.out.println("ROW:"+row);
-        //System.out.println("COL:"+col);
+
+                col = countFreeColumn(state, kingPosition);
+                row = countFreeRow(state,kingPosition);
+                }
+
+
+        else {
+            */
+        if ((kingPosition[1] > 2 && kingPosition[1] < 6)) {
+                // safe row not safe col
+                row = countFreeRow(state, kingPosition);
+            }
+        if ((kingPosition[0] > 2 && kingPosition[0] < 6)) {
+                // safe col not safe row
+                col = countFreeColumn(state, kingPosition);
+            }
+
         return (col + row);
     }
 
-
+    //checks the whole table to get the king position
     private static int[] kingPosition(State state) {
         //where I saved the int position of the king
         int[] king= new int[2];
@@ -191,6 +231,7 @@ public abstract class Features {
         return king;
     }
 
+    //number of pawns of the kind specified by target that are at manhattan distance=1 from the target
     private static int checkNearPawns(State state, int[] position, String target){
         int count=0;
         //GET TURN
@@ -206,8 +247,9 @@ public abstract class Features {
         return count;
     }
 
+    //number of pawns of kind target in side of the given position
     private static List<int[]> positionNearPawns(State state,int[] position, String target){
-        List<int[]> occupiedPosition = new ArrayList<int[]>();
+        List<int[]> occupiedPosition = new ArrayList<>();
         int[] pos = new int[2];
         //GET TURN
         State.Pawn[][] board = state.getBoard();
@@ -234,80 +276,126 @@ public abstract class Features {
         return occupiedPosition;
     }
 
+    //checks if the king is over or on a side of the throne
     private static boolean safePositionKing(int[] kingPosition){
-        if(kingPosition[0] > 2 && kingPosition[0] < 6) {
-            return kingPosition[1] > 2 && kingPosition[1] < 6;
-        }
-        return false;
+        return safePositions[kingPosition[0]][kingPosition[1]];
     }
 
+    // 2 if both rows sides <-- and --> are free to the border
     private static int countFreeRow(State state,int[] position){
         int row=position[0];
         int column=position[1];
-        int[] currentPosition = new int[2];
+        int[] currentPosition;
         int freeWays=0;
-        int countRight=0;
-        int countLeft=0;
+
+        boolean leftObs = false;
+        boolean rightObs = false;
+
+        int right = column+1;
+        int left = column-1;
+
         //going right
-        for(int i = column+1; i<=8; i++) {
-            currentPosition[0]=row;
-            currentPosition[1]=i;
-            if (checkOccupiedPosition(state,currentPosition)) {
-                countRight++;
+        while (right<=8 && (!rightObs)){
+
+            currentPosition = new int[]{row,right};
+
+            // i don't find an obstacle on right
+            if (!MovesCheckerTablut.checkObstacles (position,currentPosition,state)) {
+                right = right+1;
             }
+
+            // i find an obstacle on right
+            else
+                rightObs = true;
         }
-        if(countRight==0)
+
+        if(!rightObs)
             freeWays++;
+
         //going left
-        for(int i=column-1;i>=0;i--) {
-            currentPosition[0]=row;
-            currentPosition[1]=i;
-            if (checkOccupiedPosition(state,currentPosition)){
-                countLeft++;
+        while (left>=0 && (!leftObs)){
+
+            currentPosition = new int[]{row,left};
+
+            // i don't find an obstacle on left
+            if (!MovesCheckerTablut.checkObstacles (position,currentPosition,state)) {
+                left = left-1;
             }
+
+            // i find an obstacle on left
+            else
+                leftObs = true;
         }
-        if(countLeft==0)
+        if(!leftObs)
             freeWays++;
 
         return freeWays;
     }
 
+    // 2 if both column sides<-- and --> are free to the border
     private static int countFreeColumn(State state,int[] position){
         //lock column
         int row=position[0];
         int column=position[1];
-        int[] currentPosition = new int[2];
+        int[] currentPosition;
         int freeWays=0;
-        int countUp=0;
-        int countDown=0;
+        int down = row+1;
+        int up = row-1;
+
+        boolean upObs = false;
+        boolean downObs = false;
+
         //going down
-        for(int i=row+1;i<=8;i++) {
-            currentPosition[0]=i;
-            currentPosition[1]=column;
-            if (checkOccupiedPosition(state,currentPosition)) {
-                countDown++;
+        while(down <=8 && (!downObs)){
+            currentPosition = new int[]{down, column};
+
+            // i don't find an obstacle down
+            if (!MovesCheckerTablut.checkObstacles(position, currentPosition, state)) {
+                down = down + 1;
             }
+            // i find an obstacle down
+            else
+                downObs = true;
         }
-        if(countDown==0)
+
+        if(!downObs)
             freeWays++;
+
         //going up
-        for(int i=row-1;i>=0;i--) {
+ /*       for(int i=row-1;i>=0;i--) {
             currentPosition[0]=i;
             currentPosition[1]=column;
             if (checkOccupiedPosition(state,currentPosition)){
                 countUp++;
             }
         }
-        if(countUp==0)
+*/
+        while(up >=0 && (!upObs)){
+            currentPosition = new int[]{up, column};
+
+            // i don't find an obstacle up
+            if (!MovesCheckerTablut.checkObstacles(position, currentPosition, state)) {
+                up = up - 1;
+            }
+            // i find an obstacle up
+            else
+                upObs = true;
+        }
+
+
+        if(!upObs)
             freeWays++;
 
         return freeWays;
     }
 
+    /* if a given position is occupied by any kind of pawn, doesn't consider black camps or thrones as obstacles
     private static boolean checkOccupiedPosition(State state,int[] position){
         return !state.getPawn(position[0], position[1]).equals(State.Pawn.EMPTY);
     }
+     */
 
+    // number of black pawns that are required to kill the King in the given state
     private static int getNumEatenPositions(State state){
 
         int[] kingPosition = kingPosition(state);
@@ -323,6 +411,7 @@ public abstract class Features {
 
     }
 
+    // number of white pawns that are in the defined best positions
     private static int getNumberOnBestPositions(State state){
 
         int num = 0;
@@ -338,6 +427,7 @@ public abstract class Features {
         return num;
     }
 
+    // forwards to getValuesOnRhombus just if black players are over a given threshold, otherwise gives 0
     private static int getNumberOnRhombus(State state){
 
         if (state.getNumberOf(State.Pawn.BLACK) >= THRESHOLD) {
@@ -347,6 +437,7 @@ public abstract class Features {
         }
     }
 
+    // counts the number of pawns in rhombus position
     private static int getValuesOnRhombus(State state){
 
         int count = 0;
