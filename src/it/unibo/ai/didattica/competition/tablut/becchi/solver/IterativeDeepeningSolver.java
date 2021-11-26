@@ -3,14 +3,12 @@ package it.unibo.ai.didattica.competition.tablut.becchi.solver;
 import aima.core.search.adversarial.AdversarialSearch;
 import aima.core.search.adversarial.Game;
 import aima.core.search.framework.Metrics;
+import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Features;
 import it.unibo.ai.didattica.competition.tablut.becchi.heuristic.Heuristic;
 import it.unibo.ai.didattica.competition.tablut.domain.Action;
 import it.unibo.ai.didattica.competition.tablut.domain.State;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class IterativeDeepeningSolver implements AdversarialSearch<State,Action> {
     public static final String METRICS_NODES_EXPANDED = "nodesExpanded";
@@ -169,7 +167,33 @@ public class IterativeDeepeningSolver implements AdversarialSearch<State,Action>
     }
 
     public List<Action> orderActions(State state, List<Action> actions, State.Turn player, int depth) {
-        return actions;
+        return orderActionsAsKingDestination(state, actions);
+    }
+
+    private List<Action> orderActionsAsKingDestination(State state, List<Action> actions) {
+        ActionStore newActions = new ActionStore();
+        int[] kingPos = null;
+        State.Pawn[][] board = state.getBoard();
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board.length; j++) {
+                if (state.getPawn(i, j).equalsPawn("K")) {
+                    kingPos = new int[]{i,j};
+                    break;
+                }
+            }
+            if (kingPos != null) {
+                break;
+            }
+        }
+        for (Action action : actions) {
+            assert kingPos != null;
+            if (action.getRowTo() == kingPos[0] || action.getColumnTo() == kingPos[1]) {
+                newActions.add(action, 1);
+            } else {
+                newActions.add(action,0);
+            }
+        }
+        return newActions.actions;
     }
 
     private static class ActionStore {
