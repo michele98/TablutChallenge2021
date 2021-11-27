@@ -433,4 +433,39 @@ public abstract class Features {
         return count;
 
     }
+
+    //measures the distance of the king from the edges of the table
+    public static int kingDistanceFromTheEdges(State state){
+        int countx = 0;
+        int county = 0;
+        int[] kingPosition = kingPosition(state);
+        int xKing = kingPosition[0];
+        int yKing = kingPosition[1];
+        if(xKing >= 4) {
+            while (xKing <= 8) {
+                countx += 1;
+                xKing += 1;
+            }
+        }
+        else{
+            while(xKing >= 0){
+                countx +=1;
+                xKing -= 1;
+            }
+        }
+
+        if(yKing >= 4) {
+            while (yKing <= 8){
+                yKing +=1;
+                county +=1;
+            }
+        }
+        else{
+            while(yKing >= 0){
+                yKing -=1;
+                county += 1;
+            }
+        }
+        return Math.min(countx, county);
+    }
 }
