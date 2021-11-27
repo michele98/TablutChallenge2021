@@ -47,7 +47,7 @@ public class TablutBecchiClient extends TablutClient {
             System.out.println("Selected client: " + args[0]);
             role = (args[0]);
         }
-        if (args.length == 2) {
+        if (args.length >= 2) {
             timeout = Integer.parseInt(args[1]);
         }
         if (args.length == 3) {
@@ -56,7 +56,7 @@ public class TablutBecchiClient extends TablutClient {
 
         System.out.println("Timeout: " + timeout + "s");
 
-        TablutBecchiClient client = new TablutBecchiClient(role, name, timeout, ipAddress);
+        TablutBecchiClient client = new TablutBecchiClient(role, name, timeout-1, ipAddress);
         client.run();
     }
 
