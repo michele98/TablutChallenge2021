@@ -48,7 +48,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         this.utilMax = utilMax;
         this.timer = new Timer(time);
         this.heuristic = heuristic;
-        setLogEnabled(true);
+        setLogEnabled(false);
         this.transpositionTable = new TranspositionTable(cacheSize, 0.5);
     }
 
@@ -84,9 +84,10 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
                 logText = new StringBuffer("depth " + currDepthLimit + ": ");
 
             if (transpositionTable.hasAlreadyEvaluated(state, currDepthLimit)) {
-                if (logEnabled)
+                if (logEnabled) {
                     System.out.println(logText);
                     System.out.println("Decided first action from transposition table");
+                }
                 continue;
             }
             heuristicEvaluationUsed = false;
@@ -122,10 +123,8 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
         transpositionTable.saveSearchData(state, value, currDepthLimit, bestActionIndex);
         this.visited.add(game.getResult(state,result).toLinearString());
 
-        if (logEnabled) {
-            transpositionTable.printSize();
-            transpositionTable.printLookups();
-        }
+        transpositionTable.printSize();
+        transpositionTable.printLookups();
         transpositionTable.resetLookups();
         return result;
     }
