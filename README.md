@@ -1,23 +1,25 @@
- Tablut Challenge 2021 - Becchi Team
+# Tablut Challenge 2021 - Becchi Team
  
 Insert instructions here
 
-##### Requirements #####
+## Requirements #####
 Java version 11 or superior
 
-##### To run the player executable ###### 
+## To run the player executable ###### 
 
-## To run the white player ##
+#### To run the white player ##
 
 java -jar Becchi.jar WHITE 60 localhost
 
 
-## To run the black player ##
+#### To run the black player ##
 
 java -jar Becchi.jar BLACK 60 localhost
 
 
-note: the general syntax is:
+#####note
+
+the general syntax is:
 
 java -jar Becchi.jar "COLOR" "TIMEOUT" "SERVERIP"
 
