@@ -1,6 +1,5 @@
 # Tablut Challenge 2021 - Becchi Team
  
-Insert instructions here
 
 ## Requirements #####
 Java version 11 or superior
