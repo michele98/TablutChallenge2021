@@ -29,3 +29,5 @@ default values are 60 and localhost for 2nd and 3rd argument
 
 ## Our inspiration
 [champions for becchi category](https://www.valsassinanews.com/wp-content/uploads/2019/05/capra-orobica-valgerola-2019-3.jpg)]]
+
+[![IMAGE ALT TEXT HERE](https://www.valsassinanews.com/wp-content/uploads/2019/05/capra-orobica-valgerola-2019-3.jpg)](https://www.valsassinanews.com/wp-content/uploads/2019/05/capra-orobica-valgerola-2019-3.jpg)
