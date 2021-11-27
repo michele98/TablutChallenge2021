@@ -60,37 +60,9 @@ public class GameAshtonTablutBecchi implements Game {
 		this.cache_size = cache_size;
 		this.movesWithutCapturing = 0;
 
-		Path p = Paths.get(logs_folder + File.separator + "_" + whiteName + "_vs_" + blackName + "_"
-				+ new Date().getTime() + "_gameLog.txt");
-		p = p.toAbsolutePath();
-		this.gameLogName = p.toString();
-		File gamefile = new File(this.gameLogName);
-		try {
-			File f = new File(logs_folder);
-			f.mkdirs();
-			if (!gamefile.exists()) {
-				gamefile.createNewFile();
-			}
-			this.gameLog = gamefile;
-			fh = null;
-			fh = new FileHandler(gameLogName, true);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-		//this.loggGame = Logger.getLogger("GameLog");
-		//loggGame.addHandler(this.fh);
-		this.fh.setFormatter(new SimpleFormatter());
-		/*
-		loggGame.setLevel(Level.FINE);
-		loggGame.fine("Players:\t" + whiteName + "\tvs\t" + blackName);
-		loggGame.fine("Repeated moves allowed:\t" + repeated_moves_allowed + "\tCache:\t" + cache_size);
-		loggGame.fine("Inizio partita");
-		loggGame.fine("Stato:\n" + state.toString());
-		*/
 		drawConditions = new ArrayList<State>();
 		this.citadels = new ArrayList<String>();
-		// this.strangeCitadels = new ArrayList<String>();
+
 		this.citadels.add("a4");
 		this.citadels.add("a5");
 		this.citadels.add("a6");
