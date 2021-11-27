@@ -26,7 +26,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     private final Heuristic heuristic;
 
     private final HashSet<String> visited = new HashSet<>();
-    private final TranspositionTable transpositionTable = new TranspositionTable();
+    private final TranspositionTable transpositionTable;
 
     /**
      * Creates a new search object for a given game.
@@ -42,13 +42,19 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
      * @param heuristic the Heuristic used for evaluation of intermediate states.
      */
     public TranspositionTableIterativeDeepeningSolver(Game<State, Action, State.Turn> game, double utilMin, double utilMax,
-                                                      int time, Heuristic heuristic) {
+                                                      int time, Heuristic heuristic, int cacheSize) {
         this.game = game;
         this.utilMin = utilMin;
         this.utilMax = utilMax;
         this.timer = new Timer(time);
         this.heuristic = heuristic;
         setLogEnabled(true);
+        this.transpositionTable = new TranspositionTable(cacheSize, 0.5);
+    }
+
+    public TranspositionTableIterativeDeepeningSolver(Game<State, Action, State.Turn> game, double utilMin, double utilMax,
+                                                      int time, Heuristic heuristic) {
+        this(game, utilMin, utilMax, time, heuristic, 4000000);
     }
 
     public void setLogEnabled(boolean b) {
@@ -266,6 +272,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
      * actions randomly.
      */
     public List<Action> orderActions(State state, List<Action> actions, State.Turn player, int depth) {
+        Collections.shuffle(actions);
         actions = orderActionsAsKingDestination(state, actions);
         if (!transpositionTable.hasState(state)) {
             return actions;
@@ -311,16 +318,18 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
     // nested helper classes
 
     private class TranspositionTable {
-        private final int cacheSize = 2000000;
+        private final int cacheSize;
         private int lookups = 0;
         private final double fractionKept;
-        private final HashMap<String, Information> transpositionTable = new HashMap<>(cacheSize*2); //stores the utility values of the explored states
+        private final HashMap<String, Information> transpositionTable; //stores the utility values of the explored states
 
-        public TranspositionTable(double fractionKept) {
+        public TranspositionTable(int cacheSize, double fractionKept) {
             this.fractionKept = fractionKept;
+            this.cacheSize = cacheSize;
+            this.transpositionTable = new HashMap<>((int) (cacheSize*1.5));
         }
-        public TranspositionTable() {
-            this(0.5);
+        public TranspositionTable(int cacheSize) {
+            this(cacheSize, 0.5);
         }
 
         private class Information {
@@ -363,7 +372,7 @@ public class TranspositionTableIterativeDeepeningSolver implements AdversarialSe
                 info.value = value >= Float.MAX_VALUE ? Float.MAX_VALUE : (float) value;
                 info.subtreeDepth = (byte) subtreeDepth;
                 info.bestActionIndex = (short) bestActionIndex;
-                transpositionTable.put(state.toLinearString(), info);
+                transpositionTable.put(stateString, info);
             }
 
             if (transpositionTable.size() >= cacheSize) {
