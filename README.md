@@ -1,5 +1,5 @@
 # Tablut Challenge 2021 - Becchi Team
- 
+_Una bella manifestazione_ 
 
 ## Requirements #####
 Java version 11 or superior
