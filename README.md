@@ -19,6 +19,6 @@ java -jar Becchi.jar BLACK 60 localhost
 
 note: the general syntax is:
 
-java -jar Becchi.jar <COLOR> <TIMEOUT> <SERVERIP>
+java -jar Becchi.jar "COLOR" "TIMEOUT" "SERVERIP"
 
 ![alt text](https://www.valsassinanews.com/wp-content/uploads/2019/05/capra-orobica-valgerola-2019-3.jpg)
