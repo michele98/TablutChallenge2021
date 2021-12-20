@@ -1,4 +1,4 @@
-# Becchi Team - Winners (1st place) of Tablut Challenge 2021 {"1st_place_medal": "https://github.githubassets.com/images/icons/emoji/unicode/1f947.png?v8"}
+# Becchi Team - Winners (1st place) of Tablut Challenge 2021 🥇
 _Vincitori Becchi_
 _Una bella manifestazione_ 
 
