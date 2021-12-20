@@ -1,4 +1,4 @@
-# 🐐 Becchi Team - Winners (1st place) of Tablut Challenge 2021 🥇
+# 🐐 Becchi Team - Winners of Tablut Challenge 2021 🥇(http://ai.unibo.it/games/boardgamecompetition/tablut)
 _Vincitori Becchi_
 _Una bella manifestazione_ 
 
