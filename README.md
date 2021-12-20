@@ -1,4 +1,5 @@
-# Tablut Challenge 2021 - Becchi Team
+# Becchi Team - Winners (1st place) of Tablut Challenge 2021
+_Vincitori Becchi_
 _Una bella manifestazione_ 
 
 ## Requirements #####
