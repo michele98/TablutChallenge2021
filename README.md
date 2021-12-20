@@ -1,6 +1,7 @@
 # 🐐 Becchi Team - Winners of [Tablut Challenge](http://ai.unibo.it/games/boardgamecompetition/tablut) 2021 🥇
-_Vincitori Becchi_
-_Una bella manifestazione_ 
+_Vincitori Becchi_.
+_Una bella manifestazione_.
+Congratulations to all the participants and especially to our podium position mates. 
 
 ## Requirements #####
 Java version 11 or superior
